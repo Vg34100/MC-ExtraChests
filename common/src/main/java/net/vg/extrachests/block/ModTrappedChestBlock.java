@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.sounds.SoundEvents;
 import net.vg.extrachests.blockentity.ModTrappedChestBlockEntity;
 import net.vg.extrachests.util.WoodType;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ public class ModTrappedChestBlock extends ChestBlock {
     public ModTrappedChestBlock(WoodType woodType,
                                 Supplier<BlockEntityType<? extends ChestBlockEntity>> beTypeSupplier,
                                 BlockBehaviour.Properties props) {
-        super(beTypeSupplier, props);
+        super(beTypeSupplier, SoundEvents.CHEST_OPEN, SoundEvents.CHEST_CLOSE, props);
         this.woodType = woodType;
         this.beTypeSupplier = beTypeSupplier;
     }

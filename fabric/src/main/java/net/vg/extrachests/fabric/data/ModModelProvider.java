@@ -3,7 +3,7 @@ package net.vg.extrachests.fabric.data;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.model.ModelTemplates;
@@ -16,9 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public  class ModModelProvider extends FabricModelProvider {
-    private final FabricDataOutput dataOutput;
+    private final FabricPackOutput dataOutput;
     
-    public ModModelProvider(FabricDataOutput output) {
+    public ModModelProvider(FabricPackOutput output) {
         super(output);
         this.dataOutput = output;
     }

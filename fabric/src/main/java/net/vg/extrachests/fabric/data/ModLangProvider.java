@@ -1,6 +1,6 @@
 package net.vg.extrachests.fabric.data;
 
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
 import net.minecraft.core.HolderLookup;
 import net.vg.extrachests.Extrachests;
@@ -11,7 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 public class ModLangProvider extends FabricLanguageProvider {
-    protected ModLangProvider(FabricDataOutput dataOutput, CompletableFuture<HolderLookup.Provider> registryLookup) {
+    protected ModLangProvider(FabricPackOutput dataOutput, CompletableFuture<HolderLookup.Provider> registryLookup) {
         super(dataOutput, registryLookup);
     }
 

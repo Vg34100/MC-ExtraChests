@@ -10,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.level.Level;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.DoubleBlockCombiner;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -32,7 +33,7 @@ public class ModChestBlock extends ChestBlock {
     public ModChestBlock(WoodType woodType,
                          Supplier<BlockEntityType<? extends ChestBlockEntity>> beTypeSupplier,
                          Properties props) {
-        super(beTypeSupplier, props);
+        super(beTypeSupplier, SoundEvents.CHEST_OPEN, SoundEvents.CHEST_CLOSE, props);
         this.woodType = woodType;
         this.beTypeSupplier = beTypeSupplier;
 
