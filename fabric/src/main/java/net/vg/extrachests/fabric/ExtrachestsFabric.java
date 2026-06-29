@@ -12,5 +12,7 @@ public final class ExtrachestsFabric implements ModInitializer {
 
         // Run our common setup.
         Extrachests.init();
+        // On Fabric, we can call postInit immediately after since registries are available
+        Extrachests.postInit();
     }
 }

@@ -1,5 +1,5 @@
 // ModChestRegistries.java (common)
-package net.vg.justvariants_campfires.registry;
+package net.vg.extrachests.registry;
 
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -11,14 +11,14 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.vg.justvariants_campfires.Justvariants_campfires;
-import net.vg.justvariants_campfires.block.ModChestBlock;
-import net.vg.justvariants_campfires.block.ModTrappedChestBlock;
-import net.vg.justvariants_campfires.blockentity.ModChestBlockEntity;
-import net.vg.justvariants_campfires.blockentity.ModTrappedChestBlockEntity;
-import net.vg.justvariants_campfires.mixin.BlockEntityTypeInvoker;
-import net.vg.justvariants_campfires.util.Identifier;
-import net.vg.justvariants_campfires.util.WoodType;
+import net.vg.extrachests.Extrachests;
+import net.vg.extrachests.block.ModChestBlock;
+import net.vg.extrachests.block.ModTrappedChestBlock;
+import net.vg.extrachests.blockentity.ModChestBlockEntity;
+import net.vg.extrachests.blockentity.ModTrappedChestBlockEntity;
+import net.vg.extrachests.mixin.BlockEntityTypeInvoker;
+import net.vg.extrachests.util.Identifier;
+import net.vg.extrachests.util.WoodType;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -28,14 +28,15 @@ import java.util.function.Supplier;
 
 public final class ModChestRegistries {
     public static final DeferredRegister<Block> BLOCKS =
-            DeferredRegister.create(Justvariants_campfires.MOD_ID, Registries.BLOCK);
+            DeferredRegister.create(Extrachests.MOD_ID, Registries.BLOCK);
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES =
-            DeferredRegister.create(Justvariants_campfires.MOD_ID, Registries.BLOCK_ENTITY_TYPE);
+            DeferredRegister.create(Extrachests.MOD_ID, Registries.BLOCK_ENTITY_TYPE);
     public static final DeferredRegister<Item> ITEMS =
-            DeferredRegister.create(Justvariants_campfires.MOD_ID, Registries.ITEM);
+            DeferredRegister.create(Extrachests.MOD_ID, Registries.ITEM);
 
     // define what you want once
     private static final List<WoodType> WOODS = List.of(
+            WoodType.SPRUCE,
             WoodType.ACACIA,
             WoodType.BIRCH,
             WoodType.JUNGLE,
@@ -83,9 +84,9 @@ public final class ModChestRegistries {
 
         // keys
         ResourceKey<Block> blockKey = ResourceKey.create(Registries.BLOCK,
-                Identifier.of(Justvariants_campfires.MOD_ID, id));
+                Identifier.of(Extrachests.MOD_ID, id));
         ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM,
-                Identifier.of(Justvariants_campfires.MOD_ID, id));
+                Identifier.of(Extrachests.MOD_ID, id));
 
         // break the block <-> BE type cycle with tiny refs
         final RegistrySupplier<? extends BlockEntityType<? extends ChestBlockEntity>>[] beRef = new RegistrySupplier[1];

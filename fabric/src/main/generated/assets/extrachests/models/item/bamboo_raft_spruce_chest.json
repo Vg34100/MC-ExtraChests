@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "extrachests:item/bamboo_raft_spruce_chest"
+  }
+}

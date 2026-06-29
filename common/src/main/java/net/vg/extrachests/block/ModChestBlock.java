@@ -1,4 +1,4 @@
-package net.vg.justvariants_campfires.block;
+package net.vg.extrachests.block;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -15,10 +15,9 @@ import net.minecraft.world.level.block.DoubleBlockCombiner;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.ChestBlockEntity;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
-import net.vg.justvariants_campfires.blockentity.ModChestBlockEntity;
-import net.vg.justvariants_campfires.util.WoodType;
+import net.vg.extrachests.blockentity.ModChestBlockEntity;
+import net.vg.extrachests.util.WoodType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
@@ -28,11 +27,15 @@ public class ModChestBlock extends ChestBlock {
 
     private final WoodType woodType;
     private final DoubleBlockCombiner.Combiner<ChestBlockEntity, Optional<MenuProvider>> menuProviderCombiner;
-    
-    public ModChestBlock(WoodType woodType, Supplier<BlockEntityType<? extends ChestBlockEntity>> blockEntitySupplier, BlockBehaviour.Properties properties) {
-        super(blockEntitySupplier, properties);
+    private final Supplier<BlockEntityType<? extends ChestBlockEntity>> beTypeSupplier;
+
+    public ModChestBlock(WoodType woodType,
+                         Supplier<BlockEntityType<? extends ChestBlockEntity>> beTypeSupplier,
+                         Properties props) {
+        super(beTypeSupplier, props);
         this.woodType = woodType;
-        
+        this.beTypeSupplier = beTypeSupplier;
+
         this.menuProviderCombiner = new DoubleBlockCombiner.Combiner<ChestBlockEntity, Optional<MenuProvider>>() {
             public Optional<MenuProvider> acceptDouble(final ChestBlockEntity chestBlockEntity, final ChestBlockEntity chestBlockEntity2) {
                 final Container container = new CompoundContainer(chestBlockEntity, chestBlockEntity2);
@@ -52,8 +55,8 @@ public class ModChestBlock extends ChestBlock {
                         if (chestBlockEntity.hasCustomName()) {
                             return chestBlockEntity.getDisplayName();
                         } else {
-                            return chestBlockEntity2.hasCustomName() ? chestBlockEntity2.getDisplayName() : 
-                                Component.translatable(woodType.getTranslationKey(false, true));
+                            return chestBlockEntity2.hasCustomName() ? chestBlockEntity2.getDisplayName() :
+                                    Component.translatable(woodType.getTranslationKey(false, true));
                         }
                     }
                 });
@@ -71,9 +74,9 @@ public class ModChestBlock extends ChestBlock {
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new ModChestBlockEntity(woodType, this.blockEntityType.get(), pos, state);
+        return new ModChestBlockEntity((BlockEntityType<?>) beTypeSupplier.get(), pos, state);
     }
-    
+
     @Override
     @Nullable
     public MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
@@ -84,4 +87,5 @@ public class ModChestBlock extends ChestBlock {
     public WoodType getWoodType() {
         return woodType;
     }
+
 }

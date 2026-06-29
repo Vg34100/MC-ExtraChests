@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "extrachests:item/pale_oak_jungle_chest_boat"
+  }
+}

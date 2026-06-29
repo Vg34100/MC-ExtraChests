@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "extrachests:item/acacia_spruce_chest_boat"
+  }
+}

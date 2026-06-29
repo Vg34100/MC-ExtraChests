@@ -1,5 +1,5 @@
 // common/src/main/java/net/vg/justvariants_campfires/mixin/BlockEntityTypeInvoker.java
-package net.vg.justvariants_campfires.mixin;
+package net.vg.extrachests.mixin;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;

@@ -56,3 +56,11 @@ shadowJar {
 remapJar {
     input.set shadowJar.archiveFile
 }
+
+sourceSets {
+    main {
+        resources {
+            srcDir project(':fabric').file('src/main/generated')
+        }
+    }
+}

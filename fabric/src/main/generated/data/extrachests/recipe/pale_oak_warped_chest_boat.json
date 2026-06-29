@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "chest_boat",
+  "ingredients": [
+    "minecraft:pale_oak_boat",
+    "extrachests:warped_chest"
+  ],
+  "result": {
+    "count": 1,
+    "id": "extrachests:pale_oak_warped_chest_boat"
+  }
+}

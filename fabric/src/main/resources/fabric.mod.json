@@ -19,6 +19,9 @@
     ],
     "client": [
       "net.vg.extrachests.fabric.client.ExtrachestsFabricClient"
+    ],
+    "fabric-datagen": [
+      "net.vg.extrachests.fabric.data.ModDataGenerator"
     ]
   },
   "mixins": [

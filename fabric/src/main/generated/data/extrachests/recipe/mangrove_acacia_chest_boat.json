@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "chest_boat",
+  "ingredients": [
+    "minecraft:mangrove_boat",
+    "extrachests:acacia_chest"
+  ],
+  "result": {
+    "count": 1,
+    "id": "extrachests:mangrove_acacia_chest_boat"
+  }
+}

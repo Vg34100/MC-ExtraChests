@@ -1,6 +1,6 @@
-package net.vg.justvariants_campfires.util;
+package net.vg.extrachests.util;
 
-import net.vg.justvariants_campfires.Justvariants_campfires;
+import net.vg.extrachests.Extrachests;
 
 public enum WoodType {
     OAK("oak"),
@@ -28,7 +28,7 @@ public enum WoodType {
 
     public String getTranslationKey(boolean isTrapped, boolean isDouble) {
         StringBuilder key = new StringBuilder("container.");
-        key.append(Justvariants_campfires.MOD_ID).append(".");
+        key.append(Extrachests.MOD_ID).append(".");
         key.append(name);
         if (isTrapped) {
             key.append("_trapped");
@@ -60,7 +60,7 @@ public enum WoodType {
 
     public String getBlockTranslationKey(boolean isTrapped) {
         StringBuilder key = new StringBuilder("block.");
-        key.append(Justvariants_campfires.MOD_ID).append(".");
+        key.append(Extrachests.MOD_ID).append(".");
         key.append(name);
         if (isTrapped) {
             key.append("_trapped");
@@ -71,7 +71,7 @@ public enum WoodType {
 
     public String getItemTranslationKey(boolean isTrapped) {
         StringBuilder key = new StringBuilder("item.");
-        key.append(Justvariants_campfires.MOD_ID).append(".");
+        key.append(Extrachests.MOD_ID).append(".");
         key.append(name);
         if (isTrapped) {
             key.append("_trapped");

@@ -1,16 +1,16 @@
-package net.vg.justvariants_campfires.fabric.data;
+package net.vg.extrachests.fabric.data;
 
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.model.ModelTemplates;
-import net.minecraft.client.data.models.model.TextureMapping;
-import net.minecraft.resources.ResourceLocation;
-import net.vg.justvariants_campfires.util.WoodType;
-import net.vg.justvariants_campfires.Justvariants_campfires;
-import com.google.gson.JsonObject;
+import net.vg.extrachests.Extrachests;
+import net.vg.extrachests.registry.ModChestBoatRegistries;
+import net.vg.extrachests.util.WoodType;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +37,10 @@ public  class ModModelProvider extends FabricModelProvider {
         
         // Generate block model files for all implemented wood types
         generateBlockModelFiles();
+
+        // Generate chest boat model files
+        generateChestBoatItemModels(gen);
+
     }
     
     /**
@@ -71,7 +75,7 @@ public  class ModModelProvider extends FabricModelProvider {
 
         chestModel.addProperty("type", "minecraft:chest");
         String textureName = woodType.getName() + (isTrapped ? "_trapped" : "");
-        chestModel.addProperty("texture", Justvariants_campfires.MOD_ID + ":" + textureName);
+        chestModel.addProperty("texture", Extrachests.MOD_ID + ":" + textureName);
 
         model.add("model", chestModel);
         root.add("model", model);
@@ -85,7 +89,7 @@ public  class ModModelProvider extends FabricModelProvider {
                 .resolve("main")
                 .resolve("resources")
                 .resolve("assets")
-                .resolve(Justvariants_campfires.MOD_ID)
+                .resolve(Extrachests.MOD_ID)
                 .resolve("items")
                 .resolve(fileName);
 
@@ -124,7 +128,7 @@ public  class ModModelProvider extends FabricModelProvider {
         JsonObject variants = new JsonObject();
         
         String modelName = woodType.getName() + (isTrapped ? "_trapped" : "") + "_chest";
-        String modelPath = Justvariants_campfires.MOD_ID + ":block/" + modelName;
+        String modelPath = Extrachests.MOD_ID + ":block/" + modelName;
         
         // Generate all 24 variants (4 facings × 3 types × 2 waterlogged states)
         String[] facings = {"north", "south", "west", "east"};
@@ -162,7 +166,7 @@ public  class ModModelProvider extends FabricModelProvider {
                 .resolve("main")
                 .resolve("resources")
                 .resolve("assets")
-                .resolve(Justvariants_campfires.MOD_ID)
+                .resolve(Extrachests.MOD_ID)
                 .resolve("blockstates")
                 .resolve(fileName);
                 
@@ -209,7 +213,7 @@ public  class ModModelProvider extends FabricModelProvider {
                 .resolve("main")
                 .resolve("resources")
                 .resolve("assets")
-                .resolve(Justvariants_campfires.MOD_ID)
+                .resolve(Extrachests.MOD_ID)
                 .resolve("models")
                 .resolve("block")
                 .resolve(fileName);
@@ -221,6 +225,12 @@ public  class ModModelProvider extends FabricModelProvider {
         Files.writeString(outputPath, jsonString);
         
         System.out.println("Generated block model file: " + fileName);
+    }
+
+    public static void generateChestBoatItemModels(ItemModelGenerators gen) {
+        ModChestBoatRegistries.items().forEach((key, itemSup) ->
+                gen.generateFlatItem(itemSup.get(), ModelTemplates.FLAT_ITEM)
+        );
     }
 }
 

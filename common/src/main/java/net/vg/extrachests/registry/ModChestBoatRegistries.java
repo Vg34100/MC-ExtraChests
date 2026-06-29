@@ -1,5 +1,5 @@
 // common/src/main/java/net/vg/justvariants_campfires/registry/ModChestBoatRegistries.java
-package net.vg.justvariants_campfires.registry;
+package net.vg.extrachests.registry;
 
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
@@ -13,9 +13,9 @@ import net.minecraft.world.entity.vehicle.ChestRaft;
 import net.minecraft.world.item.BoatItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.vg.justvariants_campfires.Justvariants_campfires;
-import net.vg.justvariants_campfires.util.Identifier;
-import net.vg.justvariants_campfires.util.WoodType;
+import net.vg.extrachests.Extrachests;
+import net.vg.extrachests.util.Identifier;
+import net.vg.extrachests.util.WoodType;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,9 +25,9 @@ public final class ModChestBoatRegistries {
     private ModChestBoatRegistries() {}
 
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
-            DeferredRegister.create(Justvariants_campfires.MOD_ID, Registries.ENTITY_TYPE);
+            DeferredRegister.create(Extrachests.MOD_ID, Registries.ENTITY_TYPE);
     public static final DeferredRegister<Item> ITEMS =
-            DeferredRegister.create(Justvariants_campfires.MOD_ID, Registries.ITEM);
+            DeferredRegister.create(Extrachests.MOD_ID, Registries.ITEM);
 
     /** boat woods (bamboo => raft) */
     private static final List<WoodType> BOAT_WOODS = List.of(

@@ -1,4 +1,4 @@
-package net.vg.justvariants_campfires.client.renderer;
+package net.vg.extrachests.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -26,9 +26,9 @@ import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.phys.Vec3;
-import net.vg.justvariants_campfires.Justvariants_campfires;
-import net.vg.justvariants_campfires.blockentity.ModTrappedChestBlockEntity;
-import net.vg.justvariants_campfires.util.WoodType;
+import net.vg.extrachests.Extrachests;
+import net.vg.extrachests.blockentity.ModTrappedChestBlockEntity;
+import net.vg.extrachests.util.WoodType;
 
 public class ModTrappedChestRenderer extends ChestRenderer<ModTrappedChestBlockEntity> {
     
@@ -94,7 +94,7 @@ public class ModTrappedChestRenderer extends ChestRenderer<ModTrappedChestBlockE
         
         return new Material(
             Sheets.CHEST_SHEET,
-            ResourceLocation.fromNamespaceAndPath(Justvariants_campfires.MOD_ID, "entity/chest/" + textureName)
+            ResourceLocation.fromNamespaceAndPath(Extrachests.MOD_ID, "entity/chest/" + textureName)
         );
     }
     

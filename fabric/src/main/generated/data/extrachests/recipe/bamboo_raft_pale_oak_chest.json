@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "chest_boat",
+  "ingredients": [
+    "minecraft:bamboo_raft",
+    "extrachests:pale_oak_chest"
+  ],
+  "result": {
+    "count": 1,
+    "id": "extrachests:bamboo_raft_pale_oak_chest"
+  }
+}

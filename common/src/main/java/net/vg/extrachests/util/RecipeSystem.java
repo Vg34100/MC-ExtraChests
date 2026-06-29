@@ -1,4 +1,4 @@
-package net.vg.justvariants_campfires.util;
+package net.vg.extrachests.util;
 
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.world.item.Item;
