@@ -304,6 +304,70 @@ python build-smart.py clean        # clean build dirs
 
 **Default is `compile`** - fast compileJava only, no jar packaging. Use this during development.
 
+### Dedicated Server Validation (REQUIRED)
+
+Client startup does not validate dedicated-server compatibility. Before declaring any gameplay,
+registry, networking, mixin, or release work complete, run the normal smart compile check and
+start both dedicated-server development environments to their ready/`Done` log line. Stop each
+server cleanly with `stop` after the smoke test.
+
+```bash
+# Fabric dedicated server
+cmd.exe /c "python build-smart.py :fabric:runServer"
+
+# NeoForge dedicated server
+cmd.exe /c "python build-smart.py :neoforge:runServer"
+```
+
+Accept the generated EULA when a new run directory prompts for it, then rerun the command.
+Treat any server-side attempt to load `net.minecraft.client.*`, renderer APIs, screens, or a
+client-only mixin as a blocker. Shared/common initialization and registries must remain free of
+client-only types; register models, renderers, and other client hooks exclusively from each
+loader's client lifecycle.
+
+### Multi-Version Matrix
+
+The Stonecutter branch uses a supported matrix:
+
+- Fabric and NeoForge 1.21, 1.21.1, 26.1, 26.1.1, 26.1.2, and 26.2
+
+Use the smart wrapper rather than invoking individual generated Stonecutter projects:
+
+```bash
+python build-smart.py matrix:compile  # all Java targets
+python build-smart.py matrix:package  # all resources and jars
+python build-smart.py matrix:server   # server launch setup, no server process
+python build-smart.py matrix          # all matrix checks
+```
+
+`matrix:server` verifies that each dedicated-server launch configuration can be generated; it
+does not start Minecraft and therefore is not a replacement for the dedicated-server runtime
+smoke test above before a release.
+
+### Legacy 1.21 / 1.21.1 Matrix Rules
+
+- These targets require Java 21 for `runClient` and `runServer`; Gradle itself may still use Java 25.
+- Configure legacy run tasks through `javaLauncher`, never both `javaLauncher` and `executable`.
+  The latter causes IntelliJ's Gradle runner to fail with a toolchain mismatch.
+- The IntelliJ task path `<target> > Tasks > loom > runClient` is correct after a Gradle refresh.
+- Legacy resources and sources are generated under that target's `build/matrix-*` directories;
+  change canonical `common/`, `fabric/`, or `neoforge/` inputs and the narrow generator rules,
+  never generated output.
+- Item-definition tint data is 26.x-only. If a legacy item needs dynamic color, register it through
+  Fabric's item color registry and NeoForge's legacy `RegisterColorHandlersEvent.Item`. These callbacks
+  require opaque `0xFFRRGGBB` colors; fish-textured spawn eggs must override vanilla egg tinting with
+  opaque white.
+- Canonical NeoForge 26.2 metadata uses `iconFile`; generate `logoFile` only for legacy NeoForge
+  resources, rather than leaving a deprecated key in current releases.
+- A backward port must have both client and dedicated-server runtime smoke tests. Compilation is
+  particularly weak evidence across the 26.x-to-1.21 API/resource boundary.
+- Read `docs/development/stonecutter-multiversion-migration.md` before adding another legacy target.
+
+Run the two servers sequentially unless their `server-port` values differ; both default to
+`25565`. For a local Fabric `runClient` multiplayer test, set
+`fabric/run/server.properties` to `online-mode=false` first: the development client uses a
+placeholder session token and cannot satisfy an online-mode server's Mojang profile-key check.
+
 **Example output comparison:**
 
 Raw Gradle (BAD - 150+ lines):
@@ -483,5 +547,40 @@ Item id not set
 ```
 
 check registration/property helpers first before debugging anything else.
+
+### MC 26.1.x Item Bar Methods Renamed
+
+The bundle-bar override methods on `Item` were renamed in 26.1.x:
+
+| Old name (1.21)              | New name (26.1.x)         |
+|------------------------------|---------------------------|
+| `isBundleBarVisible(stack)`  | `isBarVisible(stack)`     |
+| `getBundleBarWidth(stack)`   | `getBarWidth(stack)`      |
+| `getBundleBarColor()`        | `getBarColor(stack)`      |
+
+All three now take an `ItemStack` parameter. Add `@Override` to catch future renames.
+
+### MC 26.1.x Fishing-Rod Cast State in `items/` JSON
+
+The old `overrides` predicate `{"cast": 1}` in `models/item/fishing_rod.json` no longer works.
+Remove `overrides` from the model file entirely. Handle the cast state in `items/fishing_rod.json`:
+
+```json
+{
+  "model": {
+    "type": "minecraft:condition",
+    "property": "minecraft:fishing_rod/cast",
+    "on_true":  {"type": "minecraft:model", "model": "modid:item/fishing_rod_cast"},
+    "on_false": {"type": "minecraft:model", "model": "modid:item/fishing_rod"}
+  }
+}
+```
+
+### MC 26.1.x LootTable API
+
+`LootTable.getRandomItems(LootParams)` now returns `ObjectArrayList<ItemStack>` (still a `List`).
+Consumer-based overloads (`void getRandomItems(LootParams, Consumer<ItemStack>)`) also exist.
+Do NOT pass `null` for optional `LootContextParams` like `ATTACKING_ENTITY` — omit them entirely
+from the builder if they are not required by the loot-context param set.
 
 Recent Minecraft versions may require IDs to be assigned on `BlockBehaviour.Properties` and `Item.Properties` during construction. Fix the shared registration helpers before patching individual registrations.

@@ -199,12 +199,20 @@ def main():
 
     # Map shortcuts to actual gradle tasks
     if task_arg == "compile":
-        # Fast compile check - just compile, no jars
-        tasks = [":common:compileJava", ":fabric:compileJava", ":neoforge:compileJava"]
+        # Fast compile check - all supported Minecraft-version and loader targets.
+        tasks = ["compileMatrix"]
     elif task_arg == "compile:fabric":
-        tasks = [":common:compileJava", ":fabric:compileJava"]
+        tasks = [":26.1.2-fabric:compileJava", ":26.2-fabric:compileJava"]
     elif task_arg == "compile:neoforge":
-        tasks = [":common:compileJava", ":neoforge:compileJava"]
+        tasks = [":26.1.2-neoforge:compileJava", ":26.2-neoforge:compileJava"]
+    elif task_arg == "matrix":
+        tasks = ["verifyMatrix"]
+    elif task_arg == "matrix:compile":
+        tasks = ["compileMatrix"]
+    elif task_arg == "matrix:package":
+        tasks = ["packageMatrix"]
+    elif task_arg == "matrix:server":
+        tasks = ["verifyServerLaunchSetup"]
     elif task_arg == "release":
         # Alias for shadowJar
         tasks = ["shadowJar"]
