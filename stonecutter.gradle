@@ -1,0 +1,42 @@
+plugins {
+    id 'dev.kikugie.stonecutter'
+}
+
+stonecutter.active '26.1.2-fabric'
+
+def matrixTargets = [
+        '1.21-fabric', '1.21-neoforge',
+        '1.21.1-fabric', '1.21.1-neoforge',
+        '26.1-fabric', '26.1-neoforge',
+        '26.1.1-fabric', '26.1.1-neoforge',
+        '26.1.2-fabric', '26.1.2-neoforge',
+        '26.2-fabric', '26.2-neoforge'
+]
+
+tasks.register('compileMatrix') {
+    group = 'verification'
+    description = 'Compiles every supported Minecraft-version and loader combination.'
+    dependsOn matrixTargets.collect { ":${it}:compileJava" }
+}
+
+tasks.register('packageMatrix') {
+    group = 'build'
+    description = 'Builds the installable artifact for every matrix target.'
+    dependsOn matrixTargets.collect { target ->
+        (target.startsWith('1.21-') || target.startsWith('1.21.1-'))
+                ? ":${target}:remapJar"
+                : ":${target}:jar"
+    }
+}
+
+tasks.register('verifyServerLaunchSetup') {
+    group = 'verification'
+    description = 'Generates every dedicated-server launch configuration without starting Minecraft.'
+    dependsOn matrixTargets.collect { ":${it}:configureLaunch" }
+}
+
+tasks.register('verifyMatrix') {
+    group = 'verification'
+    description = 'Runs compilation, packaging, and server launch setup for the complete matrix.'
+    dependsOn 'compileMatrix', 'packageMatrix', 'verifyServerLaunchSetup'
+}

@@ -107,7 +107,7 @@ public final class ModChestRegistries {
             RegistrySupplier<BlockEntityType<ModTrappedChestBlockEntity>> beSup =
                     BLOCK_ENTITY_TYPES.register(id, () -> {
                         final BlockEntityType<ModTrappedChestBlockEntity>[] self = new BlockEntityType[1];
-                        BlockEntityType.BlockEntitySupplier<ModTrappedChestBlockEntity> factory =
+                        BlockEntityTypeInvoker.Factory<ModTrappedChestBlockEntity> factory =
                                 (pos, state) -> new ModTrappedChestBlockEntity(self[0], pos, state);
                         BlockEntityType<ModTrappedChestBlockEntity> type =
                                 BlockEntityTypeInvoker.invokeNew(factory, Set.of(blockSup.get()));
@@ -122,7 +122,7 @@ public final class ModChestRegistries {
             RegistrySupplier<BlockEntityType<ModChestBlockEntity>> beSup =
                     BLOCK_ENTITY_TYPES.register(id, () -> {
                         final BlockEntityType<ModChestBlockEntity>[] self = new BlockEntityType[1];
-                        BlockEntityType.BlockEntitySupplier<ModChestBlockEntity> factory =
+                        BlockEntityTypeInvoker.Factory<ModChestBlockEntity> factory =
                                 (pos, state) -> new ModChestBlockEntity(self[0], pos, state);
                         BlockEntityType<ModChestBlockEntity> type =
                                 BlockEntityTypeInvoker.invokeNew(factory, Set.of(blockSup.get()));

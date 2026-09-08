@@ -11,26 +11,26 @@ authors = "VgLevelUp"
 description = '''
 
 '''
-logoFile = "icon.png"
+iconFile = "icon.png"
 
 [[dependencies.extrachests]]
 modId = "neoforge"
 type = "required"
-versionRange = "[26,)"
+versionRange = "[${neoforge_version},)"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.extrachests]]
 modId = "minecraft"
 type = "required"
-versionRange = "[26.1.2,)"
+versionRange = "[${minecraft_version}]"
 ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.extrachests]]
 modId = "architectury"
 type = "required"
-versionRange = "[20.0.0,)"
+versionRange = "[${architectury_api_version},)"
 ordering = "AFTER"
 side = "BOTH"
 

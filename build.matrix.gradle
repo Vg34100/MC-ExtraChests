@@ -1,0 +1,239 @@
+import java.util.Properties
+
+plugins {
+    id 'dev.architectury.loom-no-remap' version '1.17-SNAPSHOT' apply false
+    id 'dev.architectury.loom' version '1.7.414' apply false
+    id 'architectury-plugin' version '3.5-SNAPSHOT' apply false
+}
+
+def propertiesFile = rootProject.file("gradle/matrix/${project.name}.properties")
+if (!propertiesFile.isFile()) throw new GradleException("Missing matrix properties: ${propertiesFile}")
+def matrix = new Properties()
+propertiesFile.withInputStream { matrix.load(it) }
+def value = { String key ->
+    def result = matrix.getProperty(key)
+    if (result == null) throw new GradleException("Missing '${key}' in ${propertiesFile}")
+    result
+}
+
+def loader = value('loader')
+def legacy = matrix.getProperty('loom_generation', 'current') == 'legacy'
+def javaVersion = matrix.getProperty('java_version', '25') as int
+def isFabric = loader == 'fabric'
+def isNeoForge = loader == 'neoforge'
+if (!isFabric && !isNeoForge) throw new GradleException("Unsupported loader '${loader}'")
+
+group = rootProject.maven_group
+version = rootProject.mod_version
+
+apply plugin: legacy ? 'dev.architectury.loom' : 'dev.architectury.loom-no-remap'
+if (!legacy) apply plugin: 'architectury-plugin'
+
+base {
+    archivesName = "${rootProject.archives_name}-${loader}-${value('minecraft_version')}"
+}
+
+repositories {
+    maven { url 'https://maven.neoforged.net/releases/' }
+}
+
+if (!legacy) {
+    architectury {
+        minecraft = value('minecraft_version')
+        platformSetupLoomIde()
+        if (isFabric) fabric() else neoForge()
+    }
+} else {
+    loom { silentMojangMappingsLicense() }
+}
+
+if (isNeoForge) loom { neoForge { } }
+
+sourceSets {
+    main {
+        java.setSrcDirs(legacy ? [layout.buildDirectory.dir('matrix-sources')] : [
+                rootProject.file('common/src/main/java'),
+                rootProject.file("${loader}/src/main/java")
+        ])
+        if (legacy) java.exclude('net/vg/extrachests/fabric/data/**')
+        resources.setSrcDirs(legacy ? [layout.buildDirectory.dir('matrix-resources')] : [
+                rootProject.file('common/src/main/resources'),
+                rootProject.file("${loader}/src/main/resources"),
+                rootProject.file('fabric/src/main/generated')
+        ])
+        resources.exclude('.cache/**', '**/*.md')
+    }
+}
+
+if (legacy) {
+    tasks.register('prepareLegacySources', Sync) {
+        inputs.dir rootProject.file('gradle/matrix/legacy/common')
+        inputs.dir rootProject.file("gradle/matrix/legacy/${loader}")
+        from rootProject.file('common/src/main/java')
+        from rootProject.file("${loader}/src/main/java")
+        into layout.buildDirectory.dir('matrix-sources')
+        exclude 'net/vg/extrachests/fabric/data/**'
+        doLast {
+            fileTree(destinationDir).matching { include '**/*.java' }.files.each { sourceFile ->
+                def source = sourceFile.getText('UTF-8')
+                        .replace('net.minecraft.resources.Identifier', 'net.minecraft.resources.ResourceLocation')
+                        .replace('Identifier.fromNamespaceAndPath', 'ResourceLocation.fromNamespaceAndPath')
+                        .replace('Identifier texture', 'ResourceLocation texture')
+                        .replace('FMLEnvironment.getDist()', 'FMLEnvironment.dist')
+                        .replace('super(beTypeSupplier, SoundEvents.CHEST_OPEN, SoundEvents.CHEST_CLOSE, props);', 'super(props, beTypeSupplier);')
+                sourceFile.setText(source, 'UTF-8')
+            }
+            project.copy {
+                from rootProject.file('gradle/matrix/legacy/common')
+                into destinationDir
+            }
+            project.copy {
+                from rootProject.file("gradle/matrix/legacy/${loader}")
+                into destinationDir
+            }
+        }
+    }
+
+    tasks.register('prepareLegacyResources', Sync) {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        inputs.dir rootProject.file('gradle/matrix/legacy/resources')
+        from rootProject.file('common/src/main/resources')
+        from rootProject.file("${loader}/src/main/resources")
+        from rootProject.file('fabric/src/main/generated')
+        into layout.buildDirectory.dir('matrix-resources')
+        exclude '.cache/**', '**/*.md'
+        doLast {
+            try {
+            def root = destinationDir
+            project.delete(new File(root, 'assets/extrachests/items'))
+            fileTree(root).matching { include 'data/**/recipe/**/*.json' }.files.each { recipeFile ->
+                def recipe = new groovy.json.JsonSlurper().parse(recipeFile)
+                def legacyIngredient = { ingredient ->
+                    ingredient.startsWith('#') ? [tag: ingredient.substring(1)] : [item: ingredient]
+                }
+                if (recipe.ingredient instanceof String) recipe.ingredient = legacyIngredient(recipe.ingredient)
+                if (recipe.ingredients instanceof List) {
+                    recipe.ingredients = recipe.ingredients.collect { it instanceof String ? legacyIngredient(it) : it }
+                }
+                if (recipe.key instanceof Map) {
+                    recipe.key.each { key, ingredient ->
+                        if (ingredient instanceof String) recipe.key[key] = legacyIngredient(ingredient)
+                    }
+                }
+                recipeFile.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(recipe)) + '\n', 'UTF-8')
+            }
+            fileTree(root).matching { include '**/*pale_oak*.json', '**/*pale_oak*.png' }.files.each { project.delete(it) }
+            fileTree(root).matching { include 'data/**/tags/**/*.json' }.files.each { tagFile ->
+                def tag = new groovy.json.JsonSlurper().parse(tagFile)
+                if (tag.values instanceof List) {
+                    tag.values = tag.values.findAll { !(it instanceof String) || !it.contains('pale_oak') }
+                    tagFile.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(tag)) + '\n', 'UTF-8')
+                }
+            }
+            def langFile = new File(root, 'assets/extrachests/lang/en_us.json')
+            if (langFile.isFile()) {
+                def lang = new groovy.json.JsonSlurper().parse(langFile)
+                lang.keySet().findAll { it.contains('pale_oak') }.each { lang.remove(it) }
+                langFile.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(lang)) + '\n', 'UTF-8')
+            }
+            def legacyWoods = ['spruce', 'acacia', 'birch', 'jungle', 'bamboo', 'cherry', 'crimson', 'dark_oak', 'warped']
+            def modelDir = new File(root, 'assets/extrachests/models/item')
+            modelDir.mkdirs()
+            legacyWoods.each { wood ->
+                ["${wood}_chest", "${wood}_trapped_chest"].each { id ->
+                    new File(modelDir, "${id}.json").setText('{"parent":"builtin/entity"}\n', 'UTF-8')
+                }
+            }
+            def modsToml = new File(root, 'META-INF/neoforge.mods.toml')
+            if (modsToml.isFile()) modsToml.setText(modsToml.getText('UTF-8').replace('iconFile = "icon.png"', 'logoFile = "icon.png"'), 'UTF-8')
+            project.copy {
+                from rootProject.file('gradle/matrix/legacy/resources')
+                into root
+            }
+            } catch (Throwable error) {
+                throw new GradleException("Legacy resource transform failed: ${error.class.name}: ${error.message}", error)
+            }
+        }
+    }
+
+    tasks.named('compileJava') { dependsOn 'prepareLegacySources' }
+    tasks.named('processResources') { dependsOn 'prepareLegacyResources' }
+}
+
+dependencies {
+    minecraft "net.minecraft:minecraft:${value('minecraft_version')}"
+    if (legacy) mappings loom.officialMojangMappings()
+    if (isFabric) {
+        def addMod = legacy ? { notation -> modImplementation notation } : { notation -> implementation notation }
+        addMod("net.fabricmc:fabric-loader:${value('fabric_loader_version')}")
+        addMod("net.fabricmc.fabric-api:fabric-api:${value('fabric_api_version')}")
+        addMod("dev.architectury:architectury-fabric:${value('architectury_api_version')}")
+    } else {
+        neoForge "net.neoforged:neoforge:${value('neoforge_version')}"
+        implementation "dev.architectury:architectury-neoforge:${value('architectury_api_version')}"
+    }
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.toVersion(javaVersion)
+    targetCompatibility = JavaVersion.toVersion(javaVersion)
+    if (legacy) toolchain { languageVersion = JavaLanguageVersion.of(javaVersion) }
+}
+
+tasks.withType(JavaCompile).configureEach { options.release = javaVersion }
+
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    inputs.properties(
+            version: project.version,
+            minecraft_version: value('minecraft_version'),
+            architectury_api_version: value('architectury_api_version'),
+            java_version: javaVersion
+    )
+    if (isFabric) {
+        inputs.property 'fabric_loader_version', value('fabric_loader_version')
+        filesMatching('fabric.mod.json') {
+            expand version: project.version,
+                    minecraft_version: value('minecraft_version'),
+                    fabric_loader_version: value('fabric_loader_version'),
+                    architectury_api_version: value('architectury_api_version'),
+                    java_version: javaVersion
+        }
+    } else {
+        inputs.property 'neoforge_version', value('neoforge_version')
+        filesMatching('META-INF/neoforge.mods.toml') {
+            expand version: project.version,
+                    minecraft_version: value('minecraft_version'),
+                    neoforge_version: value('neoforge_version'),
+                    architectury_api_version: value('architectury_api_version')
+        }
+    }
+    filesMatching('*.mixins.json') { expand java_version: javaVersion }
+}
+
+loom {
+    runs.configureEach { runDir = rootProject.file("runs/${project.name}/${name}") }
+}
+
+tasks.named('jar') {
+    destinationDirectory = rootProject.layout.buildDirectory.dir("libs/${project.name}")
+}
+if (legacy) {
+    tasks.named('remapJar') {
+        destinationDirectory = rootProject.layout.buildDirectory.dir("libs/${project.name}")
+    }
+}
+
+if (legacy) {
+    tasks.register('verifyLegacyRuntime') {
+        group = 'verification'
+        doLast {
+            tasks.withType(JavaExec).matching { it.name in ['runClient', 'runServer'] }.each {
+                if (it.javaLauncher.orNull?.metadata?.languageVersion?.asInt() != 21) {
+                    throw new GradleException("${it.path} is not using Java 21")
+                }
+            }
+        }
+    }
+}

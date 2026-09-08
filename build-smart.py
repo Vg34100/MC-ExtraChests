@@ -49,15 +49,21 @@ ERROR_INDICATORS = [
     "error:",
     "Error:",
     "FAILED",
-    "Exception",
+    "Exception:",
     "cannot find symbol",
     "incompatible types",
     "method does not override",
     "unreported exception",
     "package .* does not exist",
     "class .* is public, should be declared",
+    "Could not .*",
+    "A problem occurred .*",
+    "Plugin .* was not found",
+    "No signature of method",
     "non-static .* cannot be referenced",
     "constructor .* cannot be applied",
+    "Caused by:",
+    "Legacy resource transform failed",
 ]
 
 def find_project_root():
@@ -191,20 +197,39 @@ def process_output(lines, return_code):
         for line in relevant_lines[-30:]:
             print(line)
 
+    # Configuration failures often put the useful explanation after Gradle's
+    # "What went wrong" marker without a Java-style error prefix.
+    for i, line in enumerate(lines):
+        if line.strip() == "* What went wrong:":
+            details = [entry for entry in lines[i:i + 12] if entry.strip() and not is_noise(entry)]
+            if details:
+                print("\nGradle failure details:")
+                print("-" * 60)
+                for entry in details:
+                    print(entry)
+            break
+
     print("-" * 60)
     print(f"Fix errors and rebuild")
 
 def main():
     task_arg = sys.argv[1] if len(sys.argv) > 1 else "compile"
+    extra_args = sys.argv[2:]
 
     # Map shortcuts to actual gradle tasks
     if task_arg == "compile":
         # Fast compile check - all supported Minecraft-version and loader targets.
         tasks = ["compileMatrix"]
     elif task_arg == "compile:fabric":
-        tasks = [":26.1.2-fabric:compileJava", ":26.2-fabric:compileJava"]
+        tasks = [f":{version}-fabric:compileJava" for version in
+                 ("1.21", "1.21.1", "26.1", "26.1.1", "26.1.2", "26.2")]
     elif task_arg == "compile:neoforge":
-        tasks = [":26.1.2-neoforge:compileJava", ":26.2-neoforge:compileJava"]
+        tasks = [f":{version}-neoforge:compileJava" for version in
+                 ("1.21", "1.21.1", "26.1", "26.1.1", "26.1.2", "26.2")]
+    elif task_arg == "compile:modern":
+        tasks = [f":{version}-{loader}:compileJava"
+                 for version in ("26.1", "26.1.1", "26.1.2", "26.2")
+                 for loader in ("fabric", "neoforge")]
     elif task_arg == "matrix":
         tasks = ["verifyMatrix"]
     elif task_arg == "matrix:compile":
@@ -213,11 +238,12 @@ def main():
         tasks = ["packageMatrix"]
     elif task_arg == "matrix:server":
         tasks = ["verifyServerLaunchSetup"]
-    elif task_arg == "release":
-        # Alias for shadowJar
-        tasks = ["shadowJar"]
+    elif task_arg in ("build", "shadowJar", "release"):
+        tasks = ["packageMatrix"]
     else:
         tasks = [task_arg]
+
+    tasks.extend(extra_args)
 
     return_code, lines = run_gradle(tasks)
     process_output(lines, return_code)

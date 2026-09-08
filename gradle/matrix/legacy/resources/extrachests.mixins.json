@@ -1,13 +1,10 @@
 {
   "required": true,
   "package": "net.vg.extrachests.mixin",
-  "compatibilityLevel": "JAVA_${java_version}",
+  "compatibilityLevel": "JAVA_21",
   "minVersion": "0.8",
-  "client": [
-  ],
-  "mixins": [
-    "BlockEntityTypeInvoker"
-  ],
+  "client": [],
+  "mixins": [],
   "injectors": {
     "defaultRequire": 1
   }
