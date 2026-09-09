@@ -13,6 +13,7 @@ public final class ExtraChestsClient {
     public static void init() {
         ModChestBoatRegistries.entities().forEach((combo, type) ->
                 EntityRendererRegistry.register(type, context -> new ModChestBoatRenderer(context,
+                        ModChestBoatRegistries.boatType(combo.boatWood), combo.raft,
                         ResourceLocation.fromNamespaceAndPath("extrachests", combo.texturePath()))));
         registerBlockEntityRenderers();
     }

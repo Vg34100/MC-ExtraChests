@@ -8,8 +8,6 @@ import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.Sheets;
-import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 import net.vg.extrachests.Extrachests;
 import net.vg.extrachests.util.WoodType;
@@ -21,8 +19,8 @@ public final class LegacyChestItemRenderer {
                               MultiBufferSource buffers, int light, int overlay) {
         if (root == null) root = Minecraft.getInstance().getEntityModels().bakeLayer(ModelLayers.CHEST);
         ResourceLocation texture = ResourceLocation.fromNamespaceAndPath(
-                Extrachests.MOD_ID, "entity/chest/" + wood.getTextureLocation(trapped, null));
-        VertexConsumer consumer = new Material(Sheets.CHEST_SHEET, texture).buffer(buffers, RenderType::entityCutout);
+                Extrachests.MOD_ID, "textures/entity/chest/" + wood.getTextureLocation(trapped, null) + ".png");
+        VertexConsumer consumer = buffers.getBuffer(RenderType.entityCutout(texture));
 
         poseStack.pushPose();
         poseStack.translate(0.5F, 0.5F, 0.5F);

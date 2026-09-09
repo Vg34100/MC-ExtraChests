@@ -21,6 +21,7 @@ public final class ExtraChestsNeoForgeClient {
     public void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         ModChestBoatRegistries.entities().forEach((combo, type) ->
                 event.registerEntityRenderer(type.get(), context -> new ModChestBoatRenderer(context,
+                        ModChestBoatRegistries.boatType(combo.boatWood), combo.raft,
                         ResourceLocation.fromNamespaceAndPath("extrachests", combo.texturePath()))));
         ExtraChestsClient.registerBlockEntityRenderers();
     }
