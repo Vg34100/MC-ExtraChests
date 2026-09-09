@@ -142,7 +142,7 @@ if (legacy) {
             modelDir.mkdirs()
             legacyWoods.each { wood ->
                 ["${wood}_chest", "${wood}_trapped_chest"].each { id ->
-                    new File(modelDir, "${id}.json").setText('{"parent":"builtin/entity"}\n', 'UTF-8')
+                    new File(modelDir, "${id}.json").setText('{"parent":"minecraft:item/chest"}\n', 'UTF-8')
                 }
             }
             def modsToml = new File(root, 'META-INF/neoforge.mods.toml')

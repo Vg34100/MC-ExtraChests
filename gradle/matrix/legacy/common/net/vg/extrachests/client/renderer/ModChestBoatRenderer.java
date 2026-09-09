@@ -3,9 +3,9 @@ package net.vg.extrachests.client.renderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import net.minecraft.client.model.BoatModel;
+import net.minecraft.client.model.ChestBoatModel;
+import net.minecraft.client.model.ChestRaftModel;
 import net.minecraft.client.model.ListModel;
-import net.minecraft.client.model.RaftModel;
 import net.minecraft.client.model.WaterPatchModel;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -27,7 +27,7 @@ public final class ModChestBoatRenderer extends EntityRenderer<Boat> {
         super(context);
         this.texture = texture;
         var root = context.bakeLayer(ModelLayers.createChestBoatModelName(type));
-        this.model = raft ? new RaftModel(root) : new BoatModel(root);
+        this.model = raft ? new ChestRaftModel(root) : new ChestBoatModel(root);
         this.shadowRadius = 0.8F;
     }
 
