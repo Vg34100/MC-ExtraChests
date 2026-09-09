@@ -2,7 +2,6 @@ package net.vg.extrachests.client.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
@@ -24,7 +23,6 @@ public final class LegacyChestItemRenderer {
 
         poseStack.pushPose();
         poseStack.translate(0.5F, 0.5F, 0.5F);
-        poseStack.mulPose(Axis.YP.rotationDegrees(-180.0F));
         poseStack.translate(-0.5F, -0.5F, -0.5F);
         root.getChild("bottom").render(poseStack, consumer, light, overlay);
         root.getChild("lid").render(poseStack, consumer, light, overlay);
