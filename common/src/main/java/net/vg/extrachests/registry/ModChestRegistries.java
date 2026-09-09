@@ -16,14 +16,13 @@ import net.vg.extrachests.block.ModChestBlock;
 import net.vg.extrachests.block.ModTrappedChestBlock;
 import net.vg.extrachests.blockentity.ModChestBlockEntity;
 import net.vg.extrachests.blockentity.ModTrappedChestBlockEntity;
-import net.vg.extrachests.mixin.BlockEntityTypeInvoker;
+import net.vg.extrachests.util.BlockEntityTypes;
 import net.vg.extrachests.util.Identifier;
 import net.vg.extrachests.util.WoodType;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
 
 public final class ModChestRegistries {
@@ -107,10 +106,8 @@ public final class ModChestRegistries {
             RegistrySupplier<BlockEntityType<ModTrappedChestBlockEntity>> beSup =
                     BLOCK_ENTITY_TYPES.register(id, () -> {
                         final BlockEntityType<ModTrappedChestBlockEntity>[] self = new BlockEntityType[1];
-                        BlockEntityTypeInvoker.Factory<ModTrappedChestBlockEntity> factory =
-                                (pos, state) -> new ModTrappedChestBlockEntity(self[0], pos, state);
-                        BlockEntityType<ModTrappedChestBlockEntity> type =
-                                BlockEntityTypeInvoker.invokeNew(factory, Set.of(blockSup.get()));
+                        BlockEntityType<ModTrappedChestBlockEntity> type = BlockEntityTypes.create(
+                                (pos, state) -> new ModTrappedChestBlockEntity(self[0], pos, state), blockSup.get());
                         self[0] = type;
                         return type;
                     });
@@ -122,10 +119,8 @@ public final class ModChestRegistries {
             RegistrySupplier<BlockEntityType<ModChestBlockEntity>> beSup =
                     BLOCK_ENTITY_TYPES.register(id, () -> {
                         final BlockEntityType<ModChestBlockEntity>[] self = new BlockEntityType[1];
-                        BlockEntityTypeInvoker.Factory<ModChestBlockEntity> factory =
-                                (pos, state) -> new ModChestBlockEntity(self[0], pos, state);
-                        BlockEntityType<ModChestBlockEntity> type =
-                                BlockEntityTypeInvoker.invokeNew(factory, Set.of(blockSup.get()));
+                        BlockEntityType<ModChestBlockEntity> type = BlockEntityTypes.create(
+                                (pos, state) -> new ModChestBlockEntity(self[0], pos, state), blockSup.get());
                         self[0] = type;
                         return type;
                     });

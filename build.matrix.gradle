@@ -73,6 +73,7 @@ if (legacy) {
         from rootProject.file("${loader}/src/main/java")
         into layout.buildDirectory.dir('matrix-sources')
         exclude 'net/vg/extrachests/fabric/data/**'
+        if (loader == 'neoforge') exclude 'net/vg/extrachests/neoforge/mixin/EarlyNeoForgeArchitecturyCompat*.java'
         doLast {
             fileTree(destinationDir).matching { include '**/*.java' }.files.each { sourceFile ->
                 def source = sourceFile.getText('UTF-8')
@@ -145,7 +146,12 @@ if (legacy) {
                 }
             }
             def modsToml = new File(root, 'META-INF/neoforge.mods.toml')
-            if (modsToml.isFile()) modsToml.setText(modsToml.getText('UTF-8').replace('iconFile = "icon.png"', 'logoFile = "icon.png"'), 'UTF-8')
+            if (modsToml.isFile()) modsToml.setText(
+                    modsToml.getText('UTF-8')
+                            .replace('iconFile = "icon.png"', 'logoFile = "icon.png"')
+                            .replaceAll(/(?m)^\[\[mixins]]\Rconfig = "extrachests-neoforge-compat\.mixins\.json"\R?/, ''),
+                    'UTF-8')
+            project.delete(new File(root, 'extrachests-neoforge-compat.mixins.json'))
             project.copy {
                 from rootProject.file('gradle/matrix/legacy/resources')
                 into root

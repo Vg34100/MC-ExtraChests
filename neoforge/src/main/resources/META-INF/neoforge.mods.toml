@@ -36,3 +36,6 @@ side = "BOTH"
 
 [[mixins]]
 config = "extrachests.mixins.json"
+
+[[mixins]]
+config = "extrachests-neoforge-compat.mixins.json"
