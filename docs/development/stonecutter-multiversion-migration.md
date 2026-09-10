@@ -45,6 +45,15 @@ The shared Java/resources stay canonical in the normal `common/`, `fabric/`,
 and `neoforge/` directories. Only a target that needs source-level API changes
 gets a generated compatibility source view.
 
+Before declaring a target supported, use the accompanying
+[`stonecutter-port-acceptance-checklist.md`](stonecutter-port-acceptance-checklist.md).
+It distinguishes a compiling project, a development launch, and a real
+installable release jar—the three checks that caught the important failures in
+this matrix.
+
+Future agent sessions should follow the context-efficient port order below.
+Do not begin with an exhaustive launch sweep.
+
 ## Before changing the build
 
 1. Start from a working, single-version build for both loaders.
@@ -56,6 +65,35 @@ gets a generated compatibility source view.
    current target.
 5. Do not promise support from a compile result alone. Client mixins, metadata,
    resource formats, and NeoForge's launch pipeline are runtime concerns.
+
+## Context-efficient port order
+
+Use phase gates so one incorrect compatibility assumption is not multiplied
+across the entire matrix:
+
+1. Inventory the mod's Minecraft API calls, mixins, resources, dependencies,
+   vanilla-derived behavior, and loader-native hooks.
+2. Prove the unchanged canonical target still compiles and launches.
+3. Choose sentinel targets: the oldest Fabric target, the oldest NeoForge
+   target, and any known dependency/API boundary. Work on only those targets.
+4. Compile a sentinel after batching related edits. Once it compiles, package
+   its actual release artifact and test representative behavior—including
+   models and textures—before copying the transform to adjacent versions.
+5. Expand only a demonstrated transform to targets in the same API generation.
+   Compile and package those targets together in one smart-wrapper invocation.
+6. Run the exhaustive matrix compile/package and client/server sweep only after
+   sentinel behavior is correct. Do not repeatedly launch unchanged targets.
+7. Keep a small validation ledger recording target, artifact type, commit,
+   client result, server result, external-launcher result, and gameplay result.
+
+Use an invalidation rule when deciding what to rerun: shared Java changes affect
+both loaders in the relevant generation; loader code affects only that loader;
+resource transforms require packaging and visual/resource validation; build
+logic requires the matrix aggregates. Documentation-only changes do not
+invalidate game launches.
+
+This order is both faster and stronger than compiling all targets first and
+discovering shared gameplay defects during the final sweep.
 
 ## Files to add
 
@@ -444,6 +482,11 @@ Use this order for every newly added target:
 
 Steps 1–3 are necessary automation. They are not proof the target works.
 
+Before performing steps 5–7 for every matrix node, complete the whole ladder on
+the sentinel targets and exercise representative transformed behavior. A title
+screen proves startup, not item transforms, entity geometry, texture selection,
+recipes, or interaction behavior.
+
 For every temporary client/server started by an agent, record its exact process
 and stop it after the smoke test. Never leave `runServer` bound to port 25565;
 it will make the next loader appear broken.
@@ -459,6 +502,28 @@ it will make the next loader appear broken.
 | NeoForge cannot find FML Client/Server class | Generic Fabric-style launch path rather than NeoForge pipeline | Same platform configuration; inspect generated launch command |
 | FML finds generic Minecraft instead of patched game jars | Loom did not use its Forge-like userdev pipeline | `loom { neoForge {} }`, `neoForge` dependency, generated arg file |
 | `Address already in use` during server test | Previous run server still owns port 25565 | Stop the exact prior process; do not alter mod code |
+
+## Porting vanilla-derived behavior safely
+
+When a mod adapts vanilla rendering, models, menus, entities, or data, inspect
+the exact vanilla implementation for the target Minecraft version before
+writing the compatibility layer. Check all three when applicable:
+
+- the vanilla resource JSON, including inherited display transforms;
+- the concrete runtime class, not merely its base class or baked layer;
+- the method body that actually chooses models, textures, or behavior.
+
+A compatible constructor or successful compile does not prove behavioral
+parity. A concrete subclass may add required model parts, and a renderer may
+read a private model/texture table instead of calling an apparently overridable
+method. Validate the visible or interactive result on a sentinel target before
+expanding the implementation.
+
+Apply the same rule to Mixins and reflective adapters. An invoker must match the
+target member's exact JVM descriptor; a locally declared interface with the same
+method shape is still a different descriptor and can compile before failing at
+Mixin application time. Inspect the target bytecode when visibility prevents a
+normal source reference, and verify the result in a real runtime.
 
 ## Adding another Minecraft version later
 

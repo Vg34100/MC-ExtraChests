@@ -362,6 +362,10 @@ smoke test above before a release.
 - A backward port must have both client and dedicated-server runtime smoke tests. Compilation is
   particularly weak evidence across the 26.x-to-1.21 API/resource boundary.
 - Read `docs/development/stonecutter-multiversion-migration.md` before adding another legacy target.
+- Use `docs/development/stonecutter-port-acceptance-checklist.md` as the release gate; a successful
+  compile or development launch does not prove an installable legacy `remapJar` artifact works.
+- Follow the migration guide's sentinel-first port order. Validate transformed gameplay on the
+  oldest Fabric/NeoForge targets before spending time on the exhaustive matrix runtime sweep.
 
 Run the two servers sequentially unless their `server-port` values differ; both default to
 `25565`. For a local Fabric `runClient` multiplayer test, set
