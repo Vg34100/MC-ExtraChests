@@ -1,0 +1,64 @@
+import java.util.Properties
+import java.util.zip.ZipFile
+
+// Extra Chests uses Loom 1.7 for legacy builds. Production task types from
+// modern Loom cannot launch those nodes; their staged JARs use PortableMC.
+def pins = new Properties()
+rootProject.file("gradle/matrix/${project.name}.properties").withInputStream { pins.load(it) }
+def legacy = pins.getProperty('loom_generation', 'current') == 'legacy'
+def fabric = pins.getProperty('loader') == 'fabric'
+def releaseTask = tasks.named(legacy ? 'remapJar' : 'jar')
+tasks.register('packageTarget') {
+    group = 'build'
+    dependsOn releaseTask
+}
+
+if (providers.gradleProperty('publish_manifest').isPresent()) {
+    apply plugin: 'com.modrinth.minotaur'
+    apply plugin: 'net.darkhax.curseforgegradle'
+    def uploadType = plugins.getPlugin('net.darkhax.curseforgegradle').class.classLoader
+            .loadClass('net.darkhax.curseforgegradle.TaskPublishCurseForge')
+    tasks.register('curseforge', uploadType)
+    apply from: rootProject.file('gradle/publishing.gradle')
+}
+
+if (providers.gradleProperty('release_smoke_dir').isPresent()) {
+    def instance = rootProject.file(providers.gradleProperty('release_smoke_dir').get())
+    def runtimeMods = configurations.create('releaseSmokeMods') {
+        canBeConsumed = false
+        // Legacy Fabric uses modImplementation; NeoForge uses implementation
+        // on every generation. Preserve the actual loader-specific wiring.
+        extendsFrom(*((legacy && fabric ? ['modImplementation', 'modRuntimeOnly']
+                : ['implementation', 'runtimeOnly']).collect { configurations.getByName(it) }))
+        attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
+    }
+    def stage = tasks.register('stageReleaseClient') {
+        dependsOn releaseTask
+        doLast {
+            def destination = new File(instance, 'mods')
+            if (destination.exists()) throw new GradleException("Refusing reused production mods directory: ${destination}")
+            def dependencies = runtimeMods.files.findAll { jar ->
+                new ZipFile(jar).withCloseable { zip ->
+                    if (zip.getEntry('net/vg/extrachests/Extrachests.class')) {
+                        throw new GradleException("Unexpected extra Extra Chests JAR: ${jar}")
+                    }
+                    fabric ? zip.getEntry('fabric.mod.json') != null && !jar.name.startsWith('fabric-loader-')
+                            : zip.getEntry('META-INF/neoforge.mods.toml') != null || zip.getEntry('META-INF/mods.toml') != null
+                }
+            }
+            copy { from releaseTask.get().archiveFile.get().asFile, dependencies; into destination }
+            logger.lifecycle("RELEASE_SMOKE_JAR: ${destination}")
+        }
+    }
+    if (fabric && !legacy) {
+        def productionType = loom.class.classLoader.loadClass('net.fabricmc.loom.task.prod.ClientProductionRunTask')
+        tasks.register('runReleaseClient', productionType) {
+            dependsOn stage
+            mods.setFrom([])
+            runDir.set(instance)
+            useXVFB.set(false)
+            jvmArgs.add('-Xlog:class+load=info:file=class-load-%p.log:uptime,level,tags')
+            programArgs.addAll('--username', 'ReleaseSmoke', '--accessToken', '0', '--version', pins.getProperty('minecraft_version'))
+        }
+    }
+}

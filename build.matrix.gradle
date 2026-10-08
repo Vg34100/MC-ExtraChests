@@ -4,6 +4,8 @@ plugins {
     id 'dev.architectury.loom-no-remap' version '1.17-SNAPSHOT' apply false
     id 'dev.architectury.loom' version '1.7.414' apply false
     id 'architectury-plugin' version '3.5-SNAPSHOT' apply false
+    id 'com.modrinth.minotaur' version '2.10.0' apply false
+    id 'net.darkhax.curseforgegradle' version '1.3.33' apply false
 }
 
 def propertiesFile = rootProject.file("gradle/matrix/${project.name}.properties")
@@ -243,3 +245,6 @@ if (legacy) {
         }
     }
 }
+
+// Release-only task wiring; the proven source views and packaging stay intact.
+apply from: rootProject.file('gradle/distribution.gradle')
