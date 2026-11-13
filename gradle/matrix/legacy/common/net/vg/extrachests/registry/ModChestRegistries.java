@@ -57,8 +57,8 @@ public final class ModChestRegistries {
         RegistrySupplier<Block> block = BLOCKS.register(id, () -> {
             Supplier<BlockEntityType<? extends ChestBlockEntity>> type = () -> beRef[0].get();
             return trapped
-                    ? new ModTrappedChestBlock(wood, type, BlockBehaviour.Properties.of())
-                    : new ModChestBlock(wood, type, BlockBehaviour.Properties.of());
+                    ? new ModTrappedChestBlock(wood, type, ModProperties.block(id))
+                    : new ModChestBlock(wood, type, ModProperties.block(id));
         });
 
         if (trapped) {
@@ -84,7 +84,7 @@ public final class ModChestRegistries {
             CHEST_TYPES.put(wood, type);
             CHEST_BLOCKS.put(wood, block);
         }
-        ITEMS.register(id, () -> new BlockItem(block.get(), new Item.Properties()));
+        ITEMS.register(id, () -> new BlockItem(block.get(), ModProperties.item(id)));
     }
 
     private ModChestRegistries() {}

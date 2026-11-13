@@ -1,0 +1,68 @@
+// Canonical gameplay stays on 26.1.2. This view isolates actual 26.3 API drift.
+sourceSets.main.java.setSrcDirs([layout.buildDirectory.dir('matrix-sources')])
+tasks.register('prepare263Sources', Sync) {
+    from rootProject.file('common/src/main/java')
+    from rootProject.file("${project.name.endsWith('-fabric') ? 'fabric' : 'neoforge'}/src/main/java")
+    into layout.buildDirectory.dir('matrix-sources')
+    // Datagen remains owned by the canonical target, not a runtime entrypoint.
+    exclude 'net/vg/extrachests/fabric/data/**'
+    exclude 'net/vg/extrachests/neoforge/mixin/EarlyNeoForgeArchitecturyCompat*.java'
+    doLast {
+        def changes = [
+            'ModChestBoatRenderer.java': [
+                'this.texture, light, OverlayTexture.NO_OVERLAY, state.outlineColor, null);':
+                    'this.texture, light, OverlayTexture.NO_OVERLAY, state.outlineColor);'
+            ],
+            'ModChestRenderer.java': [
+                'spriteId, sprites, 0, state.breakProgress);': '''spriteId, sprites, 0);
+        // 26.3 separates block-breaking overlays from the model submission.
+        if (state.breakProgress != null) {
+            nodeCollector.order(1).submitCrumblingOverlay(model, openAmount, poseStack,
+                    spriteId.renderType(model.renderType()), state.lightCoords,
+                    OverlayTexture.NO_OVERLAY, -1, state.breakProgress);
+        }'''
+            ]
+        ]
+        changes.each { name, replacements ->
+            def file = new File(destinationDir, "net/vg/extrachests/client/renderer/${name}")
+            def source = file.getText('UTF-8')
+            replacements.each { before, after ->
+                if (source.count(before) != 1) throw new GradleException("Unexpected 26.3 renderer shape: ${name}")
+                source = source.replace(before, after)
+            }
+            file.setText(source, 'UTF-8')
+        }
+    }
+}
+tasks.named('compileJava') { dependsOn 'prepare263Sources' }
+
+sourceSets.main.resources.setSrcDirs([layout.buildDirectory.dir('matrix-resources')])
+tasks.register('prepare263Resources', Sync) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from rootProject.file('common/src/main/resources')
+    from rootProject.file("${project.name.endsWith('-fabric') ? 'fabric' : 'neoforge'}/src/main/resources")
+    from rootProject.file('fabric/src/main/generated')
+    into layout.buildDirectory.dir('matrix-resources')
+    exclude '.cache/**', '**/*.md', 'extrachests-neoforge-compat.mixins.json'
+    doLast {
+        fileTree(destinationDir).matching { include 'data/**/advancement/**/*.json' }.files.each { file ->
+            def data = new groovy.json.JsonSlurper().parse(file)
+            data.criteria?.each { key, criterion ->
+                if (criterion.trigger == 'minecraft:recipe_unlocked' && criterion.conditions?.recipe instanceof String) {
+                    criterion.conditions.recipes = [criterion.conditions.remove('recipe')]
+                }
+            }
+            file.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(data)) + '\n', 'UTF-8')
+        }
+        def metadata = new File(destinationDir, 'fabric.mod.json')
+        if (metadata.isFile()) {
+            def data = new groovy.json.JsonSlurper().parse(metadata)
+            data.entrypoints.remove('fabric-datagen')
+            metadata.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(data)) + '\n', 'UTF-8')
+        }
+        def toml = new File(destinationDir, 'META-INF/neoforge.mods.toml')
+        if (toml.isFile()) toml.setText(toml.getText('UTF-8')
+                .replaceAll(/(?m)^\[\[mixins]]\Rconfig = "extrachests-neoforge-compat\.mixins\.json"\R?/, ''), 'UTF-8')
+    }
+}
+tasks.named('processResources') { dependsOn 'prepare263Resources' }

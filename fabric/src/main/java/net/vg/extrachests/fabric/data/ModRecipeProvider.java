@@ -44,10 +44,10 @@ public class ModRecipeProvider extends FabricRecipeProvider {
                 ModChestRegistries.trappedBlocks().forEach((wood, block) -> {
                     // Trapped chest recipe (chest + tripwire hook)
                     shapeless(RecipeCategory.REDSTONE, block.get())
-                            .requires(block.get())
+                            .requires(ModChestRegistries.chestBlocks().get(wood).get())
                             .requires(Items.TRIPWIRE_HOOK)
                             .group("chest")
-                            .unlockedBy("has_chest", has(block.get()))
+                            .unlockedBy("has_chest", has(ModChestRegistries.chestBlocks().get(wood).get()))
                             .save(output);
                 });
             }

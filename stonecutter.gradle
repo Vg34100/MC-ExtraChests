@@ -1,17 +1,21 @@
+// Loom's Java 25 game merger inherits ASM from this parent classloader.
+buildscript {
+    dependencies {
+        classpath 'org.ow2.asm:asm:9.11'
+        classpath 'org.ow2.asm:asm-tree:9.11'
+        classpath 'org.ow2.asm:asm-commons:9.11'
+        classpath 'org.ow2.asm:asm-util:9.11'
+    }
+}
+
 plugins {
     id 'dev.kikugie.stonecutter'
 }
 
 stonecutter.active '26.1.2-fabric'
 
-def matrixTargets = [
-        '1.21-fabric', '1.21-neoforge',
-        '1.21.1-fabric', '1.21.1-neoforge',
-        '26.1-fabric', '26.1-neoforge',
-        '26.1.1-fabric', '26.1.1-neoforge',
-        '26.1.2-fabric', '26.1.2-neoforge',
-        '26.2-fabric', '26.2-neoforge'
-]
+def matrixTargets = fileTree('gradle/matrix') { include '*.properties' }.files.sort { it.name }
+        .collect { it.name - '.properties' }
 
 tasks.register('compileMatrix') {
     group = 'verification'
@@ -22,11 +26,7 @@ tasks.register('compileMatrix') {
 tasks.register('packageMatrix') {
     group = 'build'
     description = 'Builds the installable artifact for every matrix target.'
-    dependsOn matrixTargets.collect { target ->
-        (target.startsWith('1.21-') || target.startsWith('1.21.1-'))
-                ? ":${target}:remapJar"
-                : ":${target}:jar"
-    }
+    dependsOn matrixTargets.collect { ":${it}:packageTarget" }
 }
 
 tasks.register('verifyServerLaunchSetup') {

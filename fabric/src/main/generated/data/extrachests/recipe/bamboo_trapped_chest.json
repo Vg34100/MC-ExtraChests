@@ -3,7 +3,7 @@
   "category": "redstone",
   "group": "chest",
   "ingredients": [
-    "extrachests:bamboo_trapped_chest",
+    "extrachests:bamboo_chest",
     "minecraft:tripwire_hook"
   ],
   "result": {

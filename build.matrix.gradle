@@ -23,7 +23,10 @@ def legacy = matrix.getProperty('loom_generation', 'current') == 'legacy'
 def javaVersion = matrix.getProperty('java_version', '25') as int
 def isFabric = loader == 'fabric'
 def isNeoForge = loader == 'neoforge'
-if (!isFabric && !isNeoForge) throw new GradleException("Unsupported loader '${loader}'")
+def isForge = loader == 'forge'
+def is120 = value('minecraft_version') == '1.20.1'
+def is263 = value('minecraft_version') == '26.3'
+if (!isFabric && !isNeoForge && !isForge) throw new GradleException("Unsupported loader '${loader}'")
 
 group = rootProject.maven_group
 version = rootProject.mod_version
@@ -37,11 +40,13 @@ base {
 
 repositories {
     maven { url 'https://maven.neoforged.net/releases/' }
+    maven { url 'https://maven.minecraftforge.net/' }
 }
 
 if (!legacy) {
     architectury {
         minecraft = value('minecraft_version')
+        if (is263) compileOnly()
         platformSetupLoomIde()
         if (isFabric) fabric() else neoForge()
     }
@@ -50,6 +55,10 @@ if (!legacy) {
 }
 
 if (isNeoForge) loom { neoForge { } }
+if (isForge) {
+    if (!is120 || !legacy || javaVersion != 17) throw new GradleException('Forge requires 1.20.1 / Java 17')
+    loom { forge { mixinConfig 'extrachests.mixins.json' } }
+}
 
 sourceSets {
     main {
@@ -86,6 +95,14 @@ if (legacy) {
                         .replace('super(beTypeSupplier, SoundEvents.CHEST_OPEN, SoundEvents.CHEST_CLOSE, props);', 'super(props, beTypeSupplier);')
                 sourceFile.setText(source, 'UTF-8')
             }
+            // Older Properties have no registry-key setter. Keep the shared
+            // factory and remove exactly its two unsupported calls.
+            def properties = new File(destinationDir, 'net/vg/extrachests/registry/ModProperties.java')
+            def text = properties.getText('UTF-8')
+            def calls = text.readLines().findAll { it.trim().startsWith('properties.setId(') }
+            if (calls.size() != 2) throw new GradleException('Unexpected ModProperties compatibility shape')
+            calls.each { text = text.replace(it, '') }
+            properties.setText(text, 'UTF-8')
             project.copy {
                 from rootProject.file('gradle/matrix/legacy/common')
                 into destinationDir
@@ -168,6 +185,9 @@ if (legacy) {
     tasks.named('processResources') { dependsOn 'prepareLegacyResources' }
 }
 
+if (is120) apply from: rootProject.file('gradle/compat/1.20.1.gradle')
+if (is263) apply from: rootProject.file('gradle/compat/26.3.gradle')
+
 dependencies {
     minecraft "net.minecraft:minecraft:${value('minecraft_version')}"
     if (legacy) mappings loom.officialMojangMappings()
@@ -176,6 +196,9 @@ dependencies {
         addMod("net.fabricmc:fabric-loader:${value('fabric_loader_version')}")
         addMod("net.fabricmc.fabric-api:fabric-api:${value('fabric_api_version')}")
         addMod("dev.architectury:architectury-fabric:${value('architectury_api_version')}")
+    } else if (isForge) {
+        forge "net.minecraftforge:forge:${value('minecraft_version')}-${value('forge_version')}"
+        modImplementation "dev.architectury:architectury-forge:${value('architectury_api_version')}"
     } else {
         neoForge "net.neoforged:neoforge:${value('neoforge_version')}"
         implementation "dev.architectury:architectury-neoforge:${value('architectury_api_version')}"
@@ -186,7 +209,7 @@ java {
     withSourcesJar()
     sourceCompatibility = JavaVersion.toVersion(javaVersion)
     targetCompatibility = JavaVersion.toVersion(javaVersion)
-    if (legacy) toolchain { languageVersion = JavaLanguageVersion.of(javaVersion) }
+    toolchain { languageVersion = JavaLanguageVersion.of(javaVersion) }
 }
 
 tasks.withType(JavaCompile).configureEach { options.release = javaVersion }
@@ -207,6 +230,12 @@ processResources {
                     fabric_loader_version: value('fabric_loader_version'),
                     architectury_api_version: value('architectury_api_version'),
                     java_version: javaVersion
+        }
+    } else if (isForge) {
+        inputs.property 'forge_version', value('forge_version')
+        filesMatching('META-INF/mods.toml') {
+            expand version: project.version, minecraft_version: value('minecraft_version'),
+                    forge_version: value('forge_version'), architectury_api_version: value('architectury_api_version')
         }
     } else {
         inputs.property 'neoforge_version', value('neoforge_version')
@@ -238,8 +267,8 @@ if (legacy) {
         group = 'verification'
         doLast {
             tasks.withType(JavaExec).matching { it.name in ['runClient', 'runServer'] }.each {
-                if (it.javaLauncher.orNull?.metadata?.languageVersion?.asInt() != 21) {
-                    throw new GradleException("${it.path} is not using Java 21")
+                if (it.javaLauncher.orNull?.metadata?.languageVersion?.asInt() != javaVersion) {
+                    throw new GradleException("${it.path} is not using Java ${javaVersion}")
                 }
             }
         }

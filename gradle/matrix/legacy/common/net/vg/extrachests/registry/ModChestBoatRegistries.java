@@ -73,7 +73,7 @@ public final class ModChestBoatRegistries {
                                 MobCategory.MISC)
                         .sized(1.375F, 0.5625F).clientTrackingRange(10).updateInterval(3).build(id));
         RegistrySupplier<Item> item = ITEMS.register(id, () ->
-                new LegacyChestBoatItem(entity, new Item.Properties().stacksTo(1)));
+                new LegacyChestBoatItem(entity, ModProperties.item(id).stacksTo(1)));
         itemRef[0] = item;
         ENTITY_BY_COMBO.put(key, entity);
         ITEM_BY_COMBO.put(key, item);

@@ -6,22 +6,9 @@ Move a working Architectury/Fabric/NeoForge mod into one maintainable Stonecutte
 
 ## Target Matrix
 
-Current suite target set:
-
-```text
-1.21-fabric
-1.21-neoforge
-1.21.1-fabric
-1.21.1-neoforge
-26.1-fabric
-26.1-neoforge
-26.1.1-fabric
-26.1.1-neoforge
-26.1.2-fabric
-26.1.2-neoforge
-26.2-fabric
-26.2-neoforge
-```
+Discover the current 16 targets from `gradle/matrix/*.properties`; those files
+own registration, loader, Java and dependency facts. 1.20.1 uses Fabric/Forge;
+the other versions use Fabric/NeoForge. Canonical source remains 26.1.2.
 
 ## Architecture
 
@@ -33,6 +20,7 @@ gradle/matrix/*.properties
 
 common/
 fabric/
+forge/
 neoforge/
 
 gradle/compat/             # only when real divergence requires it
@@ -56,8 +44,8 @@ Responsibilities:
 
 1. Record the current baseline.
 2. Make the canonical current target build through the matrix.
-3. Prove modern sentinels (`26.2` Fabric/NeoForge).
-4. Prove legacy sentinels (`1.21.1` Fabric/NeoForge).
+3. Prove modern sentinels (`26.3` Fabric/NeoForge).
+4. Prove legacy sentinels (`1.20.1` Fabric/Forge); add legacy NeoForge when its hooks change.
 5. Fill adjacent nodes.
 6. Run the full compile/package/artifact gate once.
 7. Run representative packaged-JAR smoke.
@@ -74,7 +62,7 @@ Do not repeatedly rebuild the baseline after recording it unless later evidence 
 
 Use compiler/runtime failures from representative shapes to discover boundaries.
 
-Do not attack all 12 nodes at once.
+Do not attack the whole matrix at once.
 
 Add another sentinel only if a target introduces a unique compatibility mechanism.
 

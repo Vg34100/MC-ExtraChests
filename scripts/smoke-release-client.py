@@ -82,7 +82,9 @@ def acquire_portablemc(executable):
 
 
 def neoforge_command(executable, root, version, legacy):
-    return [str(executable), 'start', '--main-dir', ntpath.join(root, 'main'),
+    # Share only verified launcher downloads; mods/options stay isolated per run.
+    main = os.environ.get('BUILD_SMART_RELEASE_MAIN_DIR', ntpath.join(root, 'main'))
+    return [str(executable), 'start', '--main-dir', main,
             '--mc-dir', ntpath.join(root, 'client'), '--jvm-policy', 'mojang',
             '--username', 'NeoSmoke', '--jvm-arg=-Xmx2G',
             '--jvm-arg=-Xlog:' + ('class*' if legacy else 'class+load') + '=info:file=class-load-%p.log',
@@ -115,7 +117,7 @@ def run(command, run_dir, artifact, project_root, legacy=False, neoforge=None, l
     dependencies = ''
     if neoforge:
         root, executable, version = neoforge
-        neo_loader = version.startswith('neoforge:')
+        neo_loader = version.startswith(('neoforge:', 'forge:'))
         try:
             acquire_portablemc(executable)
             launch = neoforge_command(executable, root, version, legacy)
