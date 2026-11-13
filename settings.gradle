@@ -14,23 +14,21 @@ plugins {
 
 rootProject.name = 'extrachests'
 
+def matrixFiles = file('gradle/matrix').listFiles().findAll { it.name.endsWith('.properties') }.sort { it.name }
 stonecutter {
     centralScript = 'build.matrix.gradle'
     kotlinController = false
 
     create(rootProject) {
-        version('1.21-fabric', '1.21')
-        version('1.21-neoforge', '1.21')
-        version('1.21.1-fabric', '1.21.1')
-        version('1.21.1-neoforge', '1.21.1')
-        version('26.1-fabric', '26.1')
-        version('26.1-neoforge', '26.1')
-        version('26.1.1-fabric', '26.1.1')
-        version('26.1.1-neoforge', '26.1.1')
-        version('26.1.2-fabric', '26.1.2')
-        version('26.1.2-neoforge', '26.1.2')
-        version('26.2-fabric', '26.2')
-        version('26.2-neoforge', '26.2')
+        matrixFiles.each { targetFile ->
+            def target = new Properties()
+            targetFile.withInputStream { target.load(it) }
+            def name = targetFile.name - '.properties'
+            if (name != "${target.minecraft_version}-${target.loader}") {
+                throw new GradleException("Invalid matrix target: ${targetFile}")
+            }
+            version(name, target.minecraft_version)
+        }
     }
 }
 
@@ -39,5 +37,7 @@ stonecutter {
 gradle.beforeProject { project ->
     if (project.name.endsWith('-neoforge')) {
         project.extensions.extraProperties.set('loom.platform', 'neoforge')
+    } else if (project.name.endsWith('-forge')) {
+        project.extensions.extraProperties.set('loom.platform', 'forge')
     }
 }

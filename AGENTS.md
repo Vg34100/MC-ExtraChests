@@ -21,12 +21,14 @@ Detailed reusable procedures live under `docs/development/`.
 The current suite matrix is:
 
 ```text
+1.20.1    Fabric / Forge (Java 17)
 1.21      Fabric / NeoForge
 1.21.1    Fabric / NeoForge
 26.1      Fabric / NeoForge
 26.1.1    Fabric / NeoForge
 26.1.2    Fabric / NeoForge
 26.2      Fabric / NeoForge
+26.3      Fabric / NeoForge (Java 25)
 ```
 
 When this matrix exists, discover registered targets from:
@@ -48,6 +50,7 @@ build.matrix.gradle
 gradle/matrix/*.properties
 common/
 fabric/
+forge/
 neoforge/
 ```
 
@@ -86,7 +89,7 @@ Task-relevant docs:
 - validation decisions → `docs/development/validation-and-release.md`
 - publishing → `docs/development/publishing.md`
 - Extra Chests release facts → `docs/development/distribution.md`
-- Extra Chests release facts → `docs/development/distribution.md`
+- Current port evidence/manual checks → `docs/development/session-summary.md`
 
 ## Minecraft/API Investigation
 
@@ -135,13 +138,15 @@ Use the smallest validation that can disprove the current change.
 Default representative compatibility shapes:
 
 ```text
-26.2 Fabric
-26.2 NeoForge
-1.21.1 Fabric
-1.21.1 NeoForge
+26.3 Fabric
+26.3 NeoForge
+1.20.1 Fabric
+1.20.1 Forge
 ```
 
 Add another sentinel only for a genuinely unique boundary.
+The 1.21/1.21.1 NeoForge runtime is a separate legacy-loader boundary; add it
+when changing its native hooks. Keep 26.1/26.1.1's proven Architectury fix narrow.
 
 After sentinels are stable, the normal aggregate gate is:
 

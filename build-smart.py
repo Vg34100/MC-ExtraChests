@@ -49,6 +49,7 @@ Environment:
     BUILD_SMART_RELEASE_INSTALL_TIMEOUT PortableMC first-install timeout (default 600)
 """
 
+import json
 import os
 import platform
 import queue
@@ -572,6 +573,8 @@ def run_server_smoke(project, run_task, extra_args, java_home):
     """
     ready_timeout = float(os.environ.get("BUILD_SMART_SERVER_READY_TIMEOUT", "1200"))
     stop_timeout = float(os.environ.get("BUILD_SMART_SERVER_STOP_TIMEOUT", "180"))
+    checks_path = os.environ.get('BUILD_SMART_SERVER_CHECKS')
+    checks = json.loads(Path(checks_path).read_text(encoding='utf-8')) if checks_path else None
 
     cmd = gradle_command(project, [run_task] + list(extra_args), java_home)
     print(f"Running: {' '.join(cmd)}")
@@ -596,7 +599,8 @@ def run_server_smoke(project, run_task, extra_args, java_home):
                 if not ready and SERVER_READY.search(plain):
                     ready = True
                     try:
-                        process.stdin.write("stop\n")
+                        commands = checks['commands'] if checks else []
+                        process.stdin.write('\n'.join(commands + ['stop']) + '\n')
                         process.stdin.flush()
                     except OSError:
                         pass
@@ -626,6 +630,13 @@ def run_server_smoke(project, run_task, extra_args, java_home):
         and not any(benign in line for benign in BENIGN_RUNTIME_ERRORS)
     ]
 
+    missing = [marker for marker in checks['markers'] if not any(
+        re.search(r'\[Server\] ' + re.escape(marker) + r'$', ANSI_ESCAPE.sub('', line))
+        for line in lines)] if checks else []
+    if checks:
+        evidence = project.root / 'build/reports/gameplay' / (run_task.split(':')[1] + '.log')
+        evidence.parent.mkdir(parents=True, exist_ok=True)
+        evidence.write_text('\n'.join(lines) + '\n', encoding='utf-8')
     if timed_out == "ready":
         reason = f"server did not reach Done within {ready_timeout:.0f}s"
     elif timed_out == "stop":
@@ -640,8 +651,10 @@ def run_server_smoke(project, run_task, extra_args, java_home):
         reason = "server exited without logging a clean `Stopping server` shutdown"
     elif unexpected:
         reason = "unexpected runtime errors were logged"
+    elif missing:
+        reason = 'gameplay assertions missing: ' + ', '.join(missing)
     else:
-        return True, "reached Done and stopped cleanly", return_code, lines
+        return True, "reached Done and stopped cleanly" + (f"; {len(checks['markers'])} gameplay assertions passed" if checks else ''), return_code, lines
 
     print("-" * 60)
     print(f"SMOKE TEST FAILED: {reason}")
@@ -791,9 +804,9 @@ def plan(project, task_arg):
 
     if task_arg.startswith("smoke-release-client:"):
         name = task_arg.split(":", 1)[1]
-        selected = [t for t in project.targets if t.name == name and t.loader in ("fabric", "neoforge")]
+        selected = [t for t in project.targets if t.name == name and t.loader in ("fabric", "forge", "neoforge")]
         if not selected:
-            raise PlanError("Packaged client smoke needs an exact registered Fabric/NeoForge target")
+            raise PlanError("Packaged client smoke needs an exact registered Fabric/Forge/NeoForge target")
         return "release-client", selected
 
     if task_arg == "release-smoke":
@@ -919,13 +932,16 @@ def main(argv=None):
         run_dir = Path(tempfile.gettempdir()) / "extrachests-release-smoke" / target.name / uuid.uuid4().hex
         log_dir = run_dir
         neoforge = None
-        if target.loader == "neoforge" or target.legacy:
+        production = read_properties(project.root / 'gradle/publishing.properties')
+        if target.loader == "neoforge" or target.legacy or production.get(
+                f'release_smoke.{target.name}.launcher') == 'portablemc':
             try:
                 run_dir, native_root, executable = smoke["neoforge_paths"](target.name, log_dir.name)
             except (OSError, RuntimeError, subprocess.SubprocessError) as error:
                 print(f"ERROR: Production launcher prerequisites: {error}")
                 return 2
             launcher_version = ("neoforge::" + target.props["neoforge_version"] if target.loader == "neoforge"
+                                else "forge::" + target.version + "-" + target.props["forge_version"] if target.loader == "forge"
                                 else "fabric:" + target.version + ":" + target.props["fabric_loader_version"])
             neoforge = (native_root, executable, launcher_version)
         client_tasks = [f":{target.name}:runReleaseClient", f"-Prelease_smoke_dir={run_dir}"] + extra_args

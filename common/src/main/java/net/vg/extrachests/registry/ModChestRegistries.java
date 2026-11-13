@@ -81,18 +81,12 @@ public final class ModChestRegistries {
         String base = wood.getName(); // e.g., "spruce"
         String id = trapped ? base + "_trapped_chest" : base + "_chest";
 
-        // keys
-        ResourceKey<Block> blockKey = ResourceKey.create(Registries.BLOCK,
-                Identifier.of(Extrachests.MOD_ID, id));
-        ResourceKey<Item> itemKey = ResourceKey.create(Registries.ITEM,
-                Identifier.of(Extrachests.MOD_ID, id));
-
         // break the block <-> BE type cycle with tiny refs
         final RegistrySupplier<? extends BlockEntityType<? extends ChestBlockEntity>>[] beRef = new RegistrySupplier[1];
 
         // BLOCK
         RegistrySupplier<Block> blockSup = BLOCKS.register(id, () -> {
-            BlockBehaviour.Properties props = BlockBehaviour.Properties.of().setId(blockKey);
+            BlockBehaviour.Properties props = ModProperties.block(id);
             Supplier<BlockEntityType<? extends ChestBlockEntity>> beTypeSupplier =
                     () -> (BlockEntityType<? extends ChestBlockEntity>) beRef[0].get();
 
@@ -131,7 +125,7 @@ public final class ModChestRegistries {
         }
 
         // ITEM
-        ITEMS.register(id, () -> new BlockItem(blockSup.get(), new Item.Properties().setId(itemKey)));
+        ITEMS.register(id, () -> new BlockItem(blockSup.get(), ModProperties.item(id)));
     }
 
     private ModChestRegistries() {}

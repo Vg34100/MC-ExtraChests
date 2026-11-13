@@ -107,3 +107,26 @@ Validation:
 ```
 
 Raw migration diaries do not belong here.
+
+## Proven Extra Chests boundaries
+
+- **1.20.1 vs 1.21:** reuse the existing legacy view. Only identifier construction,
+  boat-model RGBA arguments, creative stack consumption and serialized data drift
+  need extra handling (`gradle/compat/1.20.1.gradle`). Recipes/loot/advancements and
+  block/item tags use plural directories; result `id` becomes `item`, and advancement
+  item predicates use arrays. Mixin Java level must come from the target pin.
+- **Legacy item rendering:** Fabric uses `BuiltinItemRendererRegistry`; Forge
+  uses `Item.initializeClient`/`IClientItemExtensions`; legacy NeoForge uses its
+  `RegisterClientExtensionsEvent`. Retain the proven 3-D chest model orientation
+  and full chest-boat/raft models, not a flat item texture or bare boat model.
+- **26.3 rendering:** submit the chest model and breaking overlay separately;
+  the water-patch submission no longer takes a trailing overlay argument. Two
+  exact, asserted renderer substitutions live in `gradle/compat/26.3.gradle`.
+  Recipe-unlocked criteria use `recipes` arrays, not a single `recipe`.
+- **Registration:** shared `Identifier` owns naming; `ModProperties` creates fresh
+  block/item properties with matching registered IDs. The legacy view removes
+  exactly its two unsupported key setters. Forge must register its Architectury
+  event bus before common registration. Keep saved IDs and deferred lookups intact.
+- **Early NeoForge:** retain the existing 26.1/26.1.1 repair. Do not copy or broaden
+  another mod's fix; 26.3 excludes that obsolete mixin/config entirely. Its standalone
+  node uses Architectury's compile-only transformation mode, not a runtime transformer.

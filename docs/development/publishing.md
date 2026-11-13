@@ -2,7 +2,7 @@
 
 ## Goal
 
-One source release, one exact 12-node publication plan, safe platform uploads, and one GitHub Release containing only installable matrix JARs.
+One source release, one matrix-derived publication plan, safe platform uploads, and one GitHub Release containing only installable matrix JARs.
 
 ## Source of Truth
 
@@ -102,6 +102,7 @@ Expected:
 
 ```text
 package
+→ freeze exclusive per-version hashes
 → verifier
 → representative release smoke
 → both platform dry-runs
@@ -136,13 +137,18 @@ Recommended order:
 3. create annotated `v<mod_version>` tag on that exact revision
 4. push tag
 5. GitHub Actions rebuilds/verifies and creates one release
-6. release contains exactly the installable matrix JARs
+6. release retrieves the frozen public Modrinth bytes and contains exactly the installable matrix JARs; no replacement rebuild
+
+Freeze records live in `gradle/canonical/<version>.json`. Never overwrite them.
+The release tag points to the matching generated public snapshot; its commit
+message records the validated `work` revision. Keep the local checkout on `work`.
 
 The GitHub workflow must not republish Modrinth/CurseForge.
 
 ## Changelog Style
 
-Keep user-facing release notes brief.
+Keep user-facing release notes brief. Explicit user-supplied notes take precedence
+over the default style below; preserve their requested wording.
 
 Do not mention:
 

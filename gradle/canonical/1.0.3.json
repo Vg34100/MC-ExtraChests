@@ -1,0 +1,184 @@
+{
+  "origin": "build",
+  "mod_version": "1.0.3",
+  "modrinth_project_id": "3uZuRL0s",
+  "legacy_json_resources": [],
+  "artifacts": [
+    {
+      "target": "1.20.1-fabric",
+      "minecraft_version": "1.20.1",
+      "loader": "fabric",
+      "filename": "extrachests-fabric-1.20.1-1.0.3.jar",
+      "size": 926774,
+      "legacy_json_count": 0,
+      "sha256": "408be72108a2abe8b4e8384c1dfbdeb7db201ca70f4d7ade6d8d46c5346e52dc",
+      "sha512": "3a3d2d4808e0c9873ba4dcb35e6b96a6d5ec35626649a65b49ad3b838095a75204e97ec24fd3d09199cebbb3276eb4f745bfc3bdf47d2a1d13ba723ed5434ba2",
+      "sha1": "00efe86ea4c8390b8ac615368e5cac05cb35712f"
+    },
+    {
+      "target": "1.20.1-forge",
+      "minecraft_version": "1.20.1",
+      "loader": "forge",
+      "filename": "extrachests-forge-1.20.1-1.0.3.jar",
+      "size": 931627,
+      "legacy_json_count": 0,
+      "sha256": "2d68027a4af344f7347d8f036281dab455aec8b96cf9ba3ebe27edc143f4c261",
+      "sha512": "521ff2aac5860289f4291a4216c73faf3c5069aa9d46d1e5344af03994bbfe0fc7e73b14519a467daf1ba7e71e966266081b729dbcd53719afa34db13288e13e",
+      "sha1": "7dc18d18240e55554d1c7546eacd54a16bab8882"
+    },
+    {
+      "target": "1.21-fabric",
+      "minecraft_version": "1.21",
+      "loader": "fabric",
+      "filename": "extrachests-fabric-1.21-1.0.3.jar",
+      "size": 925520,
+      "legacy_json_count": 0,
+      "sha256": "d4e7606b2a2971efeaa325cbc88e24ced66228f46b202fca6a6ba7a5c95d27ab",
+      "sha512": "266f88d8586f1ad4979469512fd352b45487a5b1327f5bd1b14dacf717c8135242fd4bca73257b49d16ef7d80125ff8d657bbd5d83b3c02b17d75fabb065c27b",
+      "sha1": "41a066f77f81afe141679be819cf881a8b65d083"
+    },
+    {
+      "target": "1.21-neoforge",
+      "minecraft_version": "1.21",
+      "loader": "neoforge",
+      "filename": "extrachests-neoforge-1.21-1.0.3.jar",
+      "size": 929848,
+      "legacy_json_count": 0,
+      "sha256": "b6ced2c95e9462b93bea67d74d34ff1b56a6a55dc1248d08330d186a6d425ab7",
+      "sha512": "01c95c3868e15f8c94d608362ab987b6474e7133580ef287ef8c8b2099bec31e74146d2054d2c164f168655c2a3f96f0e06587fe6be74cf52de3ed49ffb0c7d4",
+      "sha1": "bc66dd6dfd23f3f594cbc31f151db94c08529408"
+    },
+    {
+      "target": "1.21.1-fabric",
+      "minecraft_version": "1.21.1",
+      "loader": "fabric",
+      "filename": "extrachests-fabric-1.21.1-1.0.3.jar",
+      "size": 925525,
+      "legacy_json_count": 0,
+      "sha256": "10ee5835891f240d0eb3256f9ed6b566f54907bed78f4b2aa0b45f432ecbc272",
+      "sha512": "0271831c2accbbce44bdfdc734af02830d1e4017539fbf0c92279ca9cf9f81ae1e763d6ce0a64e46720599c4282cc76e2e3813647681d450313a23e4e9a13974",
+      "sha1": "c625395c9a9b0f9225ead2fc0b32a0780b799f4d"
+    },
+    {
+      "target": "1.21.1-neoforge",
+      "minecraft_version": "1.21.1",
+      "loader": "neoforge",
+      "filename": "extrachests-neoforge-1.21.1-1.0.3.jar",
+      "size": 929853,
+      "legacy_json_count": 0,
+      "sha256": "0b54177ba913c7de14b5b12c343dda8e9e3e203887c636876fe282f23db2745f",
+      "sha512": "daada3c8236a13c82cd7e4f56a01db2faf0b2764a73fee63eced2f31a11e8876963914c34f691d4de06bf53c599b70d7467a2c0a5ba28feb541cb9d79f38fbd5",
+      "sha1": "793be2684b9f4656ad7d15caad0e2d257d6696a5"
+    },
+    {
+      "target": "26.1-fabric",
+      "minecraft_version": "26.1",
+      "loader": "fabric",
+      "filename": "extrachests-fabric-26.1-1.0.3.jar",
+      "size": 1127744,
+      "legacy_json_count": 0,
+      "sha256": "45d0ffbc2e128dcbe737146b0923c7ffbf9b5fa487dd96a70817dfdcc0939ddb",
+      "sha512": "fe60db8c37524aa0520eb5165bacdc69976ec4a7be466d22c71600068258947eb8db53f2e2b9806fc4be82cf3d22cfd5997674a4a5f1c36d37cd783846ec3eb2",
+      "sha1": "2d37b453f2ad1822a730832e863631fbc50a2f23"
+    },
+    {
+      "target": "26.1-neoforge",
+      "minecraft_version": "26.1",
+      "loader": "neoforge",
+      "filename": "extrachests-neoforge-26.1-1.0.3.jar",
+      "size": 1117858,
+      "legacy_json_count": 0,
+      "sha256": "738c496b1344e47d924db70cc0b5665c095915130dce886a27cd6e35414453f1",
+      "sha512": "7a6c6b59c04e58cc6f53185f83ed9280bcc7c30e253fcbfff74faef1852a698a323524bbb361779d96e5ed8963232436baa44cc23282886698a703f756a6f06a",
+      "sha1": "7e566643856e3b2c99f2f3803c2d02aac39811c8"
+    },
+    {
+      "target": "26.1.1-fabric",
+      "minecraft_version": "26.1.1",
+      "loader": "fabric",
+      "filename": "extrachests-fabric-26.1.1-1.0.3.jar",
+      "size": 1127748,
+      "legacy_json_count": 0,
+      "sha256": "9b1c62fc2d36052f29ae557fb0bbc43a6eccbcdfe00b433614b83bcabb462e17",
+      "sha512": "e601f78d610fd5cba78173b3b1be709afbe88e251b8ac526c63a22e2910807329c34426323623f61557b5c6ad8454045da1d0c452c8216e8419a8c0d2695cfea",
+      "sha1": "02036da9d0aafd75a4505117692b9aa9538025dd"
+    },
+    {
+      "target": "26.1.1-neoforge",
+      "minecraft_version": "26.1.1",
+      "loader": "neoforge",
+      "filename": "extrachests-neoforge-26.1.1-1.0.3.jar",
+      "size": 1117859,
+      "legacy_json_count": 0,
+      "sha256": "ed3900ba54d780489e54a0d515bcd96a17ec50f049c1303292427264b54bb85c",
+      "sha512": "3a0fb0443684b6aa3417e29d9d5f39e9bb544d734b00e4df319c4c7144f507c77dddddb0a55810b0deb9a6208d8ca9efb683c4375a90c04324d1cf31dad13fcc",
+      "sha1": "fddea9a473313d2ed3bdb31af576826d64870750"
+    },
+    {
+      "target": "26.1.2-fabric",
+      "minecraft_version": "26.1.2",
+      "loader": "fabric",
+      "filename": "extrachests-fabric-26.1.2-1.0.3.jar",
+      "size": 1127748,
+      "legacy_json_count": 0,
+      "sha256": "44da62518526134696f1d629d9ea992e6d33042199502a8383cd9dddb310d226",
+      "sha512": "07e36c00efa9d4dd10cbb7134daf710304473710ca0d992d49e8811f49462c86b01c0d06a105b5d2eeb4cfdcb00af17d642d55c88422fc948c9068755e71af79",
+      "sha1": "9b929f369791994d5e0bf7f73e2e75f5b1206a35"
+    },
+    {
+      "target": "26.1.2-neoforge",
+      "minecraft_version": "26.1.2",
+      "loader": "neoforge",
+      "filename": "extrachests-neoforge-26.1.2-1.0.3.jar",
+      "size": 1117857,
+      "legacy_json_count": 0,
+      "sha256": "e3073d122005f4a94bfb9c6fa1ae9ba22808cf340becce8bd1f2ab8d558c4a4b",
+      "sha512": "e5aec8edcce0cc4d97e64076d08664489dc952d3c087481a0fd24528f33049b7f1dc50c86410e826557faeea5cde439e4de3dbfd2f01b1ef8aecb5472574044b",
+      "sha1": "9abf4d8ef861e166d0a1fcfa239618dd5cdfc2da"
+    },
+    {
+      "target": "26.2-fabric",
+      "minecraft_version": "26.2",
+      "loader": "fabric",
+      "filename": "extrachests-fabric-26.2-1.0.3.jar",
+      "size": 1127744,
+      "legacy_json_count": 0,
+      "sha256": "05a2bee040dfab89949fa201282c7fc72c6525d61d9f80d3a97b54fe783e5431",
+      "sha512": "be779f932e0b9b7459a1f30414844b74f1c0d721fe86210b26084a784eaf3015e60f3c785880779b02f359cdc15032a401decac99573404bc54cbd5a368eff55",
+      "sha1": "6616598ee1b1bea3c21295d3ab08a58677376477"
+    },
+    {
+      "target": "26.2-neoforge",
+      "minecraft_version": "26.2",
+      "loader": "neoforge",
+      "filename": "extrachests-neoforge-26.2-1.0.3.jar",
+      "size": 1117851,
+      "legacy_json_count": 0,
+      "sha256": "e8e706fdc08f26cfb8a5847fc6fdf2ded704f5f8a662add36f76b5a6d4c457ed",
+      "sha512": "f9fb5ef4b6b602d9c50210391611d38f698b37c292b41df3b6c4ef250bbcbc943f401c3dabf60274c37120f608662f8bad867e7fa228a650eedf3f975081466e",
+      "sha1": "c6b61bd7b6cb3d29c19b72bb16764abbb9275cfe"
+    },
+    {
+      "target": "26.3-fabric",
+      "minecraft_version": "26.3",
+      "loader": "fabric",
+      "filename": "extrachests-fabric-26.3-1.0.3.jar",
+      "size": 1113136,
+      "legacy_json_count": 0,
+      "sha256": "fbbe5da50242f166e0ab037b1818f6744710249e05c1b9157a3c06845d51d92f",
+      "sha512": "91ef642b172aeb549f5f053e7bc15098e02c9bb73f99c57f03ba6b456b84090c5db90640a86c29818af68d77fa83497a26ac24b9c160089bad34a7d2f3cfb9a0",
+      "sha1": "5d624beafe7b964db990ca4474d98a0b0bff588f"
+    },
+    {
+      "target": "26.3-neoforge",
+      "minecraft_version": "26.3",
+      "loader": "neoforge",
+      "filename": "extrachests-neoforge-26.3-1.0.3.jar",
+      "size": 1115009,
+      "legacy_json_count": 0,
+      "sha256": "458679113f05874b82a0af2e3c6856faa272545eb0e326ae6498cea98fb6c7ee",
+      "sha512": "a92c45602b6b0eae8b13d402350d88334995d991f84afc2e1fe65ffc558bbe5011d74cc520fe9b8776bd4cb23fe494409a65c4556c61a9f40fdb1fb56b61d96c",
+      "sha1": "322d31f11938138cb2cee5b52fe286d1701a609d"
+    }
+  ]
+}

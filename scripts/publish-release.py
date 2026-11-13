@@ -20,6 +20,7 @@ import urllib.request
 from zipfile import ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
+CANONICAL = runpy.run_path(str(ROOT / 'scripts/canonical-artifacts.py'))
 
 
 def properties(path):
@@ -41,8 +42,9 @@ def dependencies(metadata, loader, pins, config):
         declared = {}
         for block in blocks:
             fields = dict(re.findall(r'^\s*(\w+)\s*=\s*"([^"\n]*)"', block, re.MULTILINE))
-            declared[fields["modId"]] = fields["type"]
-    for key in ("minecraft", "java", "fabricloader", "neoforge"):
+            declared[fields["modId"]] = ('required' if re.search(r'^mandatory\s*=\s*true$', block, re.MULTILINE)
+                                         else 'optional') if loader == 'forge' else fields['type']
+    for key in ("minecraft", "java", "fabricloader", "forge", "neoforge"):
         declared.pop(key, None)
     result = []
     for mod_id, kind in sorted(declared.items()):
@@ -78,13 +80,13 @@ def publication_plan(root=ROOT):
     for matrix in sorted((root / "gradle/matrix").glob("*.properties")):
         target = properties(matrix)
         minecraft, loader = target["minecraft_version"], target["loader"]
-        if matrix.stem != f"{minecraft}-{loader}" or loader not in ("fabric", "neoforge"):
+        if matrix.stem != f"{minecraft}-{loader}" or loader not in ("fabric", "forge", "neoforge"):
             raise ValueError(f"Invalid publishing target: {matrix}")
         values = dict(mod_version=version, mod_name=config['mod_name'], minecraft_version=minecraft, loader=loader,
-                      loader_name={"fabric": "Fabric", "neoforge": "NeoForge"}[loader])
+                      loader_name={"fabric": "Fabric", "forge": "Forge", "neoforge": "NeoForge"}[loader])
         artifact = f"build/libs/{matrix.stem}/{pins['archives_name']}-{loader}-{minecraft}-{version}.jar"
         source = root / loader / "src/main/resources" / (
-            "fabric.mod.json" if loader == "fabric" else "META-INF/neoforge.mods.toml")
+            "fabric.mod.json" if loader == "fabric" else "META-INF/mods.toml" if loader == 'forge' else "META-INF/neoforge.mods.toml")
         metadata = source.read_text(encoding="utf-8")
         if loader == 'fabric':
             environment = json.loads(metadata).get('environment', '*')
@@ -94,7 +96,7 @@ def publication_plan(root=ROOT):
         else:
             # Common registration runs on both sides; only renderers are gated.
             sides = re.findall(r'^\s*side\s*=\s*"([^"]+)"', metadata, re.MULTILINE)
-            bootstrap = root / 'neoforge/src/main/java/net/vg/extrachests/neoforge/ExtrachestsNeoForge.java'
+            bootstrap = root / f'{loader}/src/main/java/net/vg/extrachests/{loader}/Extrachests{"Forge" if loader == "forge" else "NeoForge"}.java'
             code = bootstrap.read_text()
             if not sides or set(sides) != {'BOTH'} or 'Extrachests.init()' not in code or re.search(r'@Mod\([^)]*dist\s*=', code):
                 raise ValueError('NeoForge Client + Server publication differs from loader metadata/bootstrap')
@@ -143,12 +145,13 @@ def verified_plan(root=ROOT):
         if artifact.resolve() != (root / row["artifact"]).resolve():
             raise ValueError(f"Unexpected verified artifact: {artifact}")
         with ZipFile(artifact) as jar:
-            meta = jar.read("fabric.mod.json" if row["loader"] == "fabric" else "META-INF/neoforge.mods.toml").decode()
+            meta = jar.read("fabric.mod.json" if row["loader"] == "fabric" else "META-INF/mods.toml" if row['loader'] == 'forge' else "META-INF/neoforge.mods.toml").decode()
         actual = dependencies(meta, row["loader"], properties(matrix), config)
         if actual != row["dependencies"]:
             raise ValueError(f"Packaged dependency metadata differs from publication plan: {row['target']}")
         row["sha256"] = hashlib.sha256(artifact.read_bytes()).hexdigest()
         row["size"] = artifact.stat().st_size
+        CANONICAL['verify'](artifact, row['target'], root)
     return data
 
 
@@ -285,9 +288,9 @@ def curseforge_nodes(data, existing=None):
             names = [file.get('name', ''), file.get('display', '')]
             semantic = (any(has_mod_version(name, data['mod_version']) for name in names)
                         and row['minecraft'] in file.get('versions', [])
-                        and {'fabric': 'Fabric', 'neoforge': 'NeoForge'}[row['loader']] in file.get('versions', []))
+                        and {'fabric': 'Fabric', 'forge': 'Forge', 'neoforge': 'NeoForge'}[row['loader']] in file.get('versions', []))
             if file.get('name') in (row['version_name'], Path(row['artifact']).name) or file.get('display') == row['version_name'] or semantic:
-                if file.get('name') == Path(row['artifact']).name and {'fabric': 'Fabric', 'neoforge': 'NeoForge'}[row['loader']] not in file.get('versions', []):
+                if file.get('name') == Path(row['artifact']).name and {'fabric': 'Fabric', 'forge': 'Forge', 'neoforge': 'NeoForge'}[row['loader']] not in file.get('versions', []):
                     verify_curseforge_mislabel(data, row, file)
                 if row['target'] in nodes:
                     raise ValueError('Multiple existing CurseForge semantic nodes: ' + row['target'])
@@ -414,6 +417,9 @@ def run(project, command, args, print_plan, wrapper):
         for step in ("matrix:package",):
             if code := wrapper["main"]([step] + args):
                 return code
+        frozen = project.root / properties(project.root / 'gradle/publishing.properties')['canonical_artifacts_file']
+        if not frozen.exists():
+            CANONICAL['freeze'](project.root)
         verified_plan(project.root)
         if code := wrapper["main"](["release-smoke"] + args):
             return code

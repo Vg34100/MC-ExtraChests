@@ -1,0 +1,59 @@
+// Only the demonstrated deltas from the existing 1.21 legacy view.
+tasks.named('prepareLegacySources', Sync) {
+    doLast {
+        fileTree(destinationDir).matching { include '**/*.java' }.files.each { file ->
+            def source = file.getText('UTF-8').replace('\r\n', '\n')
+                    .replace('net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(', 'new net.minecraft.resources.ResourceLocation(')
+                    .replace('ResourceLocation.fromNamespaceAndPath(', 'new ResourceLocation(')
+            if (file.name == 'ModChestBoatRenderer.java') {
+                source = source.replace('model.renderToBuffer(poseStack, consumer, light, OverlayTexture.NO_OVERLAY);',
+                        'model.renderToBuffer(poseStack, consumer, light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);')
+            }
+            if (file.name == 'LegacyChestBoatItem.java') {
+                source = source.replace('stack.consume(1, player);', 'if (!player.getAbilities().instabuild) stack.shrink(1);')
+            }
+            if (project.name.endsWith('-forge') && file.name == 'ModChestRegistries.java') {
+                source = source.replace('new BlockItem(block.get(), ModProperties.item(id))',
+                        'new net.vg.extrachests.forge.ForgeChestBlockItem(block.get(), ModProperties.item(id), wood, trapped)')
+            }
+            file.setText(source, 'UTF-8')
+        }
+    }
+}
+
+tasks.named('prepareLegacyResources', Sync) {
+    doLast {
+        def root = destinationDir
+        // 1.20.1 predates the singular data-pack directories and result.id.
+        ['recipe': 'recipes', 'loot_table': 'loot_tables', 'advancement': 'advancements',
+         'tags/block': 'tags/blocks', 'tags/item': 'tags/items'].each { current, old ->
+            fileTree(new File(root, 'data')).matching { include "**/${current}/**/*.json" }.files.each { file ->
+                def relative = root.toPath().relativize(file.toPath()).toString().replace('\\', '/')
+                def data = new groovy.json.JsonSlurper().parse(file)
+                if (current == 'recipe' && data.result instanceof Map && data.result.id) {
+                    data.result.item = data.result.remove('id')
+                }
+                if (current == 'advancement') {
+                    data.criteria?.each { key, criterion ->
+                        criterion.conditions?.items?.each { predicate ->
+                            if (predicate.items instanceof String) {
+                                if (predicate.items.startsWith('#')) predicate.tag = predicate.remove('items').substring(1)
+                                else predicate.items = [predicate.items]
+                            }
+                        }
+                    }
+                }
+                def target = new File(root, relative.replace("/${current}/", "/${old}/"))
+                target.parentFile.mkdirs()
+                target.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(data)) + '\n', 'UTF-8')
+                project.delete(file)
+            }
+        }
+        def fabric = new File(root, 'fabric.mod.json')
+        if (fabric.isFile()) {
+            def metadata = new groovy.json.JsonSlurper().parse(fabric)
+            metadata.entrypoints.remove('fabric-datagen')
+            fabric.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(metadata)) + '\n', 'UTF-8')
+        }
+    }
+}

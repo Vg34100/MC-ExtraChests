@@ -1,0 +1,31 @@
+{
+  "commands": [
+    "forceload add 0 0",
+    "fill 0 64 0 10 64 10 minecraft:stone",
+    "setblock 0 65 0 extrachests:spruce_chest",
+    "item replace block 0 65 0 container.26 with minecraft:diamond 3",
+    "execute if data block 0 65 0 Items[{Slot:26b,id:\"minecraft:diamond\",count:3}] run say EXTRA_CHECK single-inventory",
+    "setblock 2 65 0 extrachests:birch_trapped_chest",
+    "item replace block 2 65 0 container.26 with minecraft:emerald 4",
+    "execute if data block 2 65 0 Items[{Slot:26b,id:\"minecraft:emerald\",count:4}] run say EXTRA_CHECK trapped-inventory",
+    "setblock 4 65 0 extrachests:spruce_chest[facing=north,type=left]",
+    "setblock 5 65 0 extrachests:spruce_chest[facing=north,type=right]",
+    "execute if block 4 65 0 extrachests:spruce_chest[type=left] if block 5 65 0 extrachests:spruce_chest[type=right] run say EXTRA_CHECK double-blocks",
+    "item replace block 4 65 0 container.26 with minecraft:diamond 1",
+    "item replace block 5 65 0 container.26 with minecraft:emerald 1",
+    "execute if data block 4 65 0 Items[{Slot:26b,id:\"minecraft:diamond\"}] if data block 5 65 0 Items[{Slot:26b,id:\"minecraft:emerald\"}] run say EXTRA_CHECK double-inventory",
+    "fill 0 65 3 8 65 8 minecraft:water",
+    "summon extrachests:oak_spruce_chest_boat 2 66 5",
+    "item replace entity @e[type=extrachests:oak_spruce_chest_boat,limit=1] container.26 with minecraft:diamond 3",
+    "execute if data entity @e[type=extrachests:oak_spruce_chest_boat,limit=1] Items[{Slot:26b,id:\"minecraft:diamond\",count:3}] run say EXTRA_CHECK boat-inventory",
+    "summon extrachests:bamboo_raft_spruce_chest 5 66 5",
+    "item replace entity @e[type=extrachests:bamboo_raft_spruce_chest,limit=1] container.26 with minecraft:emerald 4",
+    "execute if data entity @e[type=extrachests:bamboo_raft_spruce_chest,limit=1] Items[{Slot:26b,id:\"minecraft:emerald\",count:4}] run say EXTRA_CHECK raft-inventory",
+    "damage @e[type=extrachests:oak_spruce_chest_boat,limit=1] 100 minecraft:generic",
+    "damage @e[type=extrachests:bamboo_raft_spruce_chest,limit=1] 100 minecraft:generic",
+    "execute if entity @e[type=minecraft:item,nbt={Item:{id:\"extrachests:oak_spruce_chest_boat\"}}] run say EXTRA_CHECK boat-drop",
+    "execute if entity @e[type=minecraft:item,nbt={Item:{id:\"extrachests:bamboo_raft_spruce_chest\"}}] run say EXTRA_CHECK raft-drop",
+    "save-all flush"
+  ],
+  "markers": ["EXTRA_CHECK single-inventory", "EXTRA_CHECK trapped-inventory", "EXTRA_CHECK double-blocks", "EXTRA_CHECK double-inventory", "EXTRA_CHECK boat-inventory", "EXTRA_CHECK raft-inventory", "EXTRA_CHECK boat-drop", "EXTRA_CHECK raft-drop"]
+}

@@ -47,6 +47,9 @@ def inspect(matrix):
     artifact = release_jar(matrix)
     legacy = pins.get('loom_generation', 'current') == 'legacy'
     java = pins.get('java_version', '25')
+    forge = pins['loader'] == 'forge'
+    old_data = pins['minecraft_version'] == '1.20.1'
+    recipe_dir, loot_dir = ('recipes', 'loot_tables') if old_data else ('recipe', 'loot_table')
     root_pins = properties(ROOT / 'gradle.properties')
     with ZipFile(artifact) as jar:
         entries = jar.namelist()
@@ -65,7 +68,8 @@ def inspect(matrix):
         classes = [name for name in files if name.endswith('.class')]
         assert classes and all(name.startswith(PACKAGE) for name in classes), 'Bundled dependency classes'
         # These vanilla overrides are part of Extra Chests' own baseline.
-        vanilla_data = {'data/minecraft/recipe/chest.json', 'data/minecraft/tags/block/mineable/axe.json'}
+        vanilla_data = {f'data/minecraft/{recipe_dir}/chest.json',
+                        f"data/minecraft/tags/{'blocks' if old_data else 'block'}/mineable/axe.json"}
         assert all(name.split('/')[1] == MOD_ID or name in vanilla_data for name in files
                    if name.startswith(('assets/', 'data/')) and len(name.split('/')) > 2
                    and not name.endswith('/')), 'Bundled external resources/datapack'
@@ -102,7 +106,8 @@ def inspect(matrix):
             assert meta['entrypoints'] == {
                 'main': ['net.vg.extrachests.fabric.ExtrachestsFabric'],
                 'client': ['net.vg.extrachests.fabric.client.ExtrachestsFabricClient'],
-                'fabric-datagen': ['net.vg.extrachests.fabric.data.ModDataGenerator'],
+                **({} if old_data or pins['minecraft_version'] == '26.3' else {
+                    'fabric-datagen': ['net.vg.extrachests.fabric.data.ModDataGenerator']}),
             }
             for kind, names in meta['entrypoints'].items():
                 # The legacy view intentionally excludes modern datagen; it is
@@ -118,27 +123,37 @@ def inspect(matrix):
 
         else:
             assert 'fabric.mod.json' not in files, 'Wrong loader metadata'
-            meta = jar.read('META-INF/neoforge.mods.toml').decode()
+            meta = jar.read('META-INF/mods.toml' if forge else 'META-INF/neoforge.mods.toml').decode()
             assert quoted(meta, 'modId') == MOD_ID
             assert quoted(meta, 'version') == root_pins['mod_version']
-            assert PACKAGE + 'neoforge/ExtrachestsNeoForge.class' in files
-            assert PACKAGE + 'neoforge/ExtraChestsNeoForgeClient.class' in files
+            loader_package = 'forge' if forge else 'neoforge'
+            loader_name = 'Forge' if forge else 'NeoForge'
+            assert PACKAGE + f'{loader_package}/Extrachests{loader_name}.class' in files
+            assert PACKAGE + f'{loader_package}/ExtraChests{loader_name}Client.class' in files
             blocks = re.findall(r'\[\[dependencies\.extrachests\]\](.*?)(?=\n\[|\Z)', meta, re.DOTALL)
             deps = {quoted(block, 'modId'): block for block in blocks}
-            assert set(deps) == {'minecraft', 'neoforge', 'architectury'}
+            platform = pins['loader']
+            assert set(deps) == {'minecraft', platform, 'architectury'}
             assert quoted(deps['minecraft'], 'versionRange') == '[' + pins['minecraft_version'] + ']'
-            for dep, pin in (('neoforge', 'neoforge_version'), ('architectury', 'architectury_api_version')):
+            for dep, pin in ((platform, platform + '_version'), ('architectury', 'architectury_api_version')):
                 assert quoted(deps[dep], 'versionRange') == '[' + pins[pin] + ',)'
-            assert all(quoted(deps[dep], 'type') == 'required' for dep in ('minecraft', 'neoforge', 'architectury'))
+            if forge:
+                assert all(re.search(r'^mandatory\s*=\s*true$', block, re.MULTILINE) for block in deps.values())
+            else:
+                assert all(quoted(block, 'type') == 'required' for block in deps.values())
             assert all(quoted(block, 'side') == 'BOTH' for block in deps.values())
             if tomllib is not None:
                 tomllib.loads(meta)
             icon_field = 'logoFile' if legacy else 'iconFile'
             assert quoted(meta, icon_field) in files
             configs = re.findall(r'^config\s*=\s*"([^"]+)"', meta, re.MULTILINE)
-            assert configs == (['extrachests.mixins.json'] if legacy else
-                               ['extrachests.mixins.json', 'extrachests-neoforge-compat.mixins.json'])
-            if not legacy:
+            if forge:
+                assert not configs
+                assert 'extrachests.mixins.json' in jar.read('META-INF/MANIFEST.MF').decode()
+            else:
+                assert configs == (['extrachests.mixins.json'] if legacy or pins['minecraft_version'] == '26.3' else
+                                   ['extrachests.mixins.json', 'extrachests-neoforge-compat.mixins.json'])
+            if not legacy and pins['minecraft_version'] != '26.3':
                 compat = read_json(configs[1])
                 assert compat['required'] and compat['compatibilityLevel'] == 'JAVA_' + java
                 assert compat['plugin'] == 'net.vg.extrachests.neoforge.mixin.EarlyNeoForgeArchitecturyCompatPlugin'
@@ -161,15 +176,35 @@ def inspect(matrix):
                 for prefix in ('blockstates', 'models/block', 'models/item' if legacy else 'items'):
                     name = f'assets/extrachests/{prefix}/{wood}{suffix}.json'
                     assert name in files, f'Missing chest resource: {name}'
-                assert f'data/extrachests/recipe/{wood}{suffix}.json' in files
-                assert f'data/extrachests/loot_table/blocks/{wood}{suffix}.json' in files
+                assert f'data/extrachests/{recipe_dir}/{wood}{suffix}.json' in files
+                assert f'data/extrachests/{loot_dir}/blocks/{wood}{suffix}.json' in files
             for texture in ('', '_left', '_right', '_trapped', '_trapped_left', '_trapped_right'):
                 image = f'assets/extrachests/textures/entity/chest/{wood}{texture}.png'
                 assert image in files and jar.read(image).startswith(b'\x89PNG\r\n\x1a\n')
         assert 'assets/extrachests/models/item/bamboo_raft_spruce_chest.json' in files
         assert 'assets/extrachests/textures/entity/chest_boat/bamboo_spruce.png' in files
+        recipes = {name: read_json(name) for name in files
+                   if name.startswith(f'data/extrachests/{recipe_dir}/') and name.endswith('.json')}
+        assert len(recipes) == (99 if legacy else 120), f'Lost chest/boat recipes: {len(recipes)}'
+        for name, recipe in recipes.items():
+            output = recipe['result']['item' if old_data else 'id']
+            if output.endswith('_trapped_chest'):
+                normal = output.replace('_trapped_chest', '_chest')
+                expected = [{'item': normal}, {'item': 'minecraft:tripwire_hook'}] if legacy else [normal, 'minecraft:tripwire_hook']
+                assert recipe['ingredients'] == expected, f'Uncraftable trapped chest: {name}'
+            if old_data:
+                assert all(isinstance(value, dict) for value in recipe.get('ingredients', [])), f'Modern ingredients: {name}'
+                assert all(isinstance(value, dict) for value in recipe.get('key', {}).values()), f'Modern keys: {name}'
+        if old_data:
+            assert not any(re.search(r'data/[^/]+/(recipe|loot_table|advancement)/', name) for name in files if not name.endswith('/'))
+        if pins['minecraft_version'] == '26.3':
+            for name in files:
+                if '/advancement/' in name and name.endswith('.json'):
+                    for criterion in read_json(name).get('criteria', {}).values():
+                        if criterion['trigger'] == 'minecraft:recipe_unlocked':
+                            assert isinstance(criterion['conditions'].get('recipes'), list), f'Old recipe trigger: {name}'
         assert not any(name.endswith(('.jar', '.java')) for name in files), 'Embedded JAR or source archive'
-        for name in ('fabric.mod.json', 'META-INF/neoforge.mods.toml', 'extrachests.mixins.json', 'extrachests-neoforge-compat.mixins.json'):
+        for name in ('fabric.mod.json', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml', 'extrachests.mixins.json', 'extrachests-neoforge-compat.mixins.json'):
             if name in files:
                 assert b'${' not in jar.read(name), f'Unexpanded metadata: {name}'
     print(f'{matrix.stem}: release metadata, classes, mixins and resources OK')

@@ -39,10 +39,10 @@ This should prove:
 ## Default Representative Matrix
 
 ```text
-26.2 Fabric
-26.2 NeoForge
-1.21.1 Fabric
-1.21.1 NeoForge
+26.3 Fabric
+26.3 NeoForge
+1.20.1 Fabric
+1.20.1 Forge
 ```
 
 Add another target only for a genuinely unique boundary.
@@ -65,7 +65,15 @@ Do not repeat after no-op/documentation-only work.
 
 Derive a short checklist from the mod's actual features.
 
-Do not manually test all 12 clients unless 12 distinct runtime mechanisms truly exist.
+Do not manually launch every client unless each represents a distinct runtime mechanism.
+
+For headless Extra Chests world assertions, set `BUILD_SMART_SERVER_CHECKS` to
+`tests/server/chests-1.20.1.json` or `tests/server/chests-26.3.json` and use
+`build-smart.py smoke-server:<target>`. Use an isolated validation world: these
+fixtures place blocks/entities near (0, 65, 0). They verify normal/trapped storage,
+double-chest halves, boat/raft storage and their custom dropped items, then save
+and stop. Full logs stay in ignored `build/reports/gameplay/`. A marker counts
+only when actually emitted by the server, never merely echoed in a command.
 
 ## Release Preflight
 

@@ -3,7 +3,7 @@
   "category": "redstone",
   "group": "chest",
   "ingredients": [
-    "extrachests:acacia_trapped_chest",
+    "extrachests:acacia_chest",
     "minecraft:tripwire_hook"
   ],
   "result": {

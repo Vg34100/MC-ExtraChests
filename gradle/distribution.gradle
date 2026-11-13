@@ -28,7 +28,7 @@ if (providers.gradleProperty('release_smoke_dir').isPresent()) {
         canBeConsumed = false
         // Legacy Fabric uses modImplementation; NeoForge uses implementation
         // on every generation. Preserve the actual loader-specific wiring.
-        extendsFrom(*((legacy && fabric ? ['modImplementation', 'modRuntimeOnly']
+        extendsFrom(*((legacy && pins.getProperty('loader') in ['fabric', 'forge'] ? ['modImplementation', 'modRuntimeOnly']
                 : ['implementation', 'runtimeOnly']).collect { configurations.getByName(it) }))
         attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME))
     }

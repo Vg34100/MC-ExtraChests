@@ -5,7 +5,7 @@
       "conditions": {
         "items": [
           {
-            "items": "extrachests:pale_oak_trapped_chest"
+            "items": "extrachests:pale_oak_chest"
           }
         ]
       },

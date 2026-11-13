@@ -1,5 +1,9 @@
 # Framework Seed Status
 
+Current 16-target port status and remaining manual checks are in
+[`docs/development/session-summary.md`](docs/development/session-summary.md).
+The acceptance below records the historical twelve-target distribution milestone.
+
 The standardized framework has been adapted for Extra Chests 1.0.2.
 
 Project identities, Client + Server environments, production dependencies,

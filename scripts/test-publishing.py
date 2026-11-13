@@ -44,12 +44,12 @@ class PublishingSafety(unittest.TestCase):
             data = PUBLISH["publication_plan"]()
         self.assertEqual({r["target"] for r in data["entries"]}, {p.stem for p in (ROOT / 'gradle/matrix').glob('*.properties')})
         self.assertEqual(len({r['version_number'] for r in data['entries']}), len(data['entries']))
-        self.assertEqual(len(data['entries']), 12)
+        self.assertEqual(len(data['entries']), len(list((ROOT / 'gradle/matrix').glob('*.properties'))))
         self.assertEqual(data['project_id'], '3uZuRL0s')
         self.assertEqual(data['curseforge_project_id'], '1597422')
         self.assertEqual(data['modrinth_environments'], dict(client_side='required', server_side='required'))
         for row in data['entries']:
-            loader = {'fabric': 'Fabric', 'neoforge': 'NeoForge'}[row['loader']]
+            loader = {'fabric': 'Fabric', 'forge': 'Forge', 'neoforge': 'NeoForge'}[row['loader']]
             self.assertEqual(row['version_name'], f"[{loader}] Extra Chests {data['mod_version']} ({row['minecraft']})")
             self.assertEqual(row['version_number'], f"{data['mod_version']}-{row['minecraft']}-{row['loader']}")
             self.assertEqual(row['artifact'], f"build/libs/{row['target']}/extrachests-{row['loader']}-{row['minecraft']}-{data['mod_version']}.jar")
@@ -65,7 +65,8 @@ class PublishingSafety(unittest.TestCase):
                 self.assertEqual(kinds['fabric-api'], 'required')
             self.assertEqual(row['curseforge_versions'], [row['minecraft'], loader, f"Java {row['java']}", 'Client', 'Server'])
             self.assertEqual(row['environments'], ['Client', 'Server'])
-            self.assertEqual(row['java'], 21 if row['minecraft'].startswith('1.21') else 25)
+            pins = PUBLISH['properties'](ROOT / 'gradle/matrix' / (row['target'] + '.properties'))
+            self.assertEqual(row['java'], int(pins.get('java_version', '25')))
 
     def test_curseforge_exact_metadata_and_duplicate_guard(self):
         data = PUBLISH['publication_plan']()
@@ -112,7 +113,7 @@ class PublishingSafety(unittest.TestCase):
                         name='Extra Chests ' + data['mod_version'], game_versions=['26.2'], loaders=['fabric'])
         with self.assertRaisesRegex(ValueError, 'Existing Modrinth'):
             PUBLISH['check_duplicates'](data, [existing])
-        for change in ({'name': 'Extra Chests ' + data['mod_version'] + '0'}, {'loaders': ['quilt']}, {'game_versions': ['1.20.1']}):
+        for change in ({'name': 'Extra Chests ' + data['mod_version'] + '0'}, {'loaders': ['quilt']}, {'game_versions': ['0.0-test-only']}):
             PUBLISH['check_duplicates'](data, [dict(existing, **change)])
         file = dict(id=1, name='extrachests-' + data['mod_version'] + '-v26.2-fabric.jar', versions=['26.2', 'Fabric'])
         with self.assertRaisesRegex(ValueError, 'Existing CurseForge'):
@@ -129,7 +130,7 @@ class PublishingSafety(unittest.TestCase):
         self.assertEqual(nodes, {'26.1.2-neoforge': 'historical'})
         with patch.object(Path, 'is_file', return_value=False):
             pending = PUBLISH['pending_entries'](data, 'modrinth', nodes)
-        self.assertEqual(len(pending), 11)
+        self.assertEqual(len(pending), len(data['entries']) - 1)
         self.assertIn('26.2-neoforge', {r['target'] for r in pending})
 
     def test_mislabelled_curseforge_jar_requires_content_proof(self):
@@ -146,7 +147,8 @@ class PublishingSafety(unittest.TestCase):
         project = WRAPPER['Project'](ROOT)
         kind, selected = WRAPPER['plan'](project, 'release-smoke')
         self.assertEqual(kind, 'release-clients')
-        self.assertEqual({t.name for t in selected}, {'26.2-fabric', '26.2-neoforge', '1.21.1-fabric', '1.21.1-neoforge'})
+        configured = set(PUBLISH['properties'](ROOT / 'gradle/publishing.properties')['release_smoke_targets'].split(','))
+        self.assertEqual({t.name for t in selected}, configured)
 
     def test_public_project_identity_and_environments_must_match(self):
         data = PUBLISH['publication_plan']()
@@ -267,10 +269,33 @@ class PublishingSafety(unittest.TestCase):
         project = WRAPPER['Project'](ROOT)
         steps = []
         replacements = dict(verified_plan=lambda *args: data, collect=lambda: steps.append('collect'))
-        with patch.dict(PUBLISH['run'].__globals__, replacements), patch('builtins.print'):
+        with patch.dict(PUBLISH['run'].__globals__, replacements), patch('builtins.print'), \
+                patch.object(Path, 'exists', return_value=False), \
+                patch.dict(PUBLISH['CANONICAL'], freeze=lambda *args: steps.append('freeze')):
             self.assertEqual(PUBLISH['run'](project, 'publish:preflight', [], False,
                                            dict(main=lambda args: steps.append(args[0]) or 0)), 0)
-        self.assertEqual(steps, ['matrix:package', 'release-smoke', 'publish:all-dry-run', 'collect'])
+        self.assertEqual(steps, ['matrix:package', 'freeze', 'release-smoke', 'publish:all-dry-run', 'collect'])
+
+    def test_frozen_bytes_reject_same_size_mutation(self):
+        import hashlib
+        payload = b'approved-release'
+        row = dict(filename='release.jar', size=len(payload),
+                   **{key: hashlib.new(key, payload).hexdigest() for key in ('sha1', 'sha256', 'sha512')})
+        PUBLISH['CANONICAL']['verify_bytes'](payload, row)
+        with self.assertRaisesRegex(ValueError, 'hash/size mismatch'):
+            PUBLISH['CANONICAL']['verify_bytes'](b'Approved-release', row)
+
+    def test_freeze_never_overwrites_existing_inventory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'gradle').mkdir()
+            (root / 'gradle/publishing.properties').write_text('canonical_artifacts_file=gradle/frozen.json\n')
+            (root / 'gradle.properties').write_text('mod_version=test\n')
+            frozen = root / 'gradle/frozen.json'
+            frozen.write_text('historical bytes')
+            with self.assertRaisesRegex(ValueError, 'Refusing to overwrite'):
+                PUBLISH['CANONICAL']['freeze'](root)
+            self.assertEqual(frozen.read_text(), 'historical bytes')
 
     def test_github_workflow_collects_verified_assets_without_platform_uploads(self):
         text = (ROOT / '.github/workflows/release.yml').read_text()
@@ -280,7 +305,8 @@ class PublishingSafety(unittest.TestCase):
         self.assertIn('Release tag does not match mod_version', text)
         self.assertIn('scripts/publish-release.py collect', text)
         self.assertIn('scripts/publish-release.py restore', text)
-        self.assertIn('-Pdev_integrations=false', text)
+        self.assertIn('scripts/canonical-artifacts.py --public', text)
+        self.assertNotIn('matrix:package', text)
         self.assertNotIn('MODRINTH_TOKEN', text)
         self.assertNotIn('CURSEFORGE_TOKEN', text)
         self.assertNotIn('publish:all', text)
@@ -303,7 +329,7 @@ class PublishingSafety(unittest.TestCase):
             with patch.dict(PUBLISH['collect'].__globals__, replacements), patch.dict(os.environ, {}, clear=True), patch('builtins.print'):
                 PUBLISH['collect']()
                 bundle = root / 'build/publishing/github-assets'
-                self.assertEqual(len(list(bundle.glob('*.jar'))), 12)
+                self.assertEqual(len(list(bundle.glob('*.jar'))), len(data['entries']))
                 PUBLISH['restore'](bundle)
                 extra = bundle / 'unexpected-dev.jar'
                 extra.touch()

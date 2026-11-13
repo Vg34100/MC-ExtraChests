@@ -126,10 +126,9 @@ public final class ModChestBoatRegistries {
         }
 
         // ITEM (BoatItem spawns whatever type we made above)
-        var itemKey = ResourceKey.create(Registries.ITEM, Identifier.of(id));
         RegistrySupplier<Item> itemSup = ITEMS.register(id, () -> {
             EntityType<? extends AbstractBoat> et = ENTITY_BY_COMBO.get(key).get();
-            return new BoatItem(et, new Item.Properties().stacksTo(1).setId(itemKey));
+            return new BoatItem(et, ModProperties.item(id).stacksTo(1));
         });
         ITEM_BY_COMBO.put(key, itemSup);
     }
